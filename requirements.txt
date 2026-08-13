@@ -5,7 +5,7 @@ charset-normalizer==3.5.0
 curl_cffi==0.16.0
 idna==3.18
 multitasking==0.0.13
-numpy==2.5.2
+numpy==2.4.6
 pandas==3.0.5
 peewee==4.3.0
 platformdirs==4.11.2
