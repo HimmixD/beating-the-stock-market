@@ -15,8 +15,6 @@ def get_avg_per_quantile(df, sorting_col, target_col, num_quantiles):
 
     return sorted_df.groupby("quantile")[target_col].mean()
 
-
-
 # in progress testing
 
 ticker = yf.Ticker("AAPL")
@@ -46,6 +44,5 @@ hist_sorted_by_momentum = hist.sort_values(
     )
 
 quant = get_avg_per_quantile(hist, "momentum_252d", "future_return_20d", 5)
-print(quant)
 
 #hist.to_csv("data/raw/AAPL_price.csv")
