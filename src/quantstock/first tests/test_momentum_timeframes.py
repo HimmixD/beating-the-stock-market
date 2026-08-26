@@ -4,6 +4,8 @@ import numpy as np
 
 pd.set_option('display.max_rows', 500)
 
+reload_data = False  # Set to True to reload data from Yahoo Finance, False to load from CSV
+
 ticker_dic = {
     "Technology": ["AAPL", "MSFT", "NVDA", "GOOGL", "META"],
     "Financials": ["JPM", "BAC", "GS", "V", "MA"],
@@ -48,21 +50,28 @@ def get_stock_data(ticker, sector):
 
 
 # running all stocks in the ticker dictionary and saving them in a list, which will be concatenated into a single DataFrame
-all_data = []
+if reload_data:
+    all_data = []
 
-for sector, tickers in ticker_dic.items():
-    for ticker in tickers:
-        print(f"Loading {ticker} ...")
+    for sector, tickers in ticker_dic.items():
+        for ticker in tickers:
+            print(f"Loading {ticker} ...")
 
-        df = get_stock_data(ticker, sector)
+            df = get_stock_data(ticker, sector)
 
-        all_data.append(df)
+            all_data.append(df)
 
-data = pd.concat(all_data)
+    data = pd.concat(all_data)
 
-data = data.reset_index()
+    data = data.reset_index()
 
-data.head()
+    data.head()
+
+    #save the data to a CSV file
+    data.to_csv("data/raw/momentum_data_25082026.csv")
+
+data = pd.read_csv("data/raw/momentum_data_25082026.csv", index_col=0)
+
 
 results = []
 
@@ -129,4 +138,33 @@ for momentum_period in momentum:
 results_df = pd.DataFrame(results)
 
 print(results_df)
+
+
+
+stock_results = []
+
+for ticker, group in data.groupby("ticker"):
+
+    q1 = group.loc[
+        group["momentum_126d_quantile"] == 1,
+        "future_return_126d"
+    ].mean()
+
+    q5 = group.loc[
+        group["momentum_126d_quantile"] == 5,
+        "future_return_126d"
+    ].mean()
+
+    stock_results.append({
+        "ticker": ticker,
+        "Q1": q1,
+        "Q5": q5,
+        "Q5-Q1": q5 - q1
+    })
+
+stock_results = pd.DataFrame(stock_results)
+
+print(stock_results)
+print(stock_results["Q5-Q1"].describe())
+print((stock_results["Q5-Q1"] > 0).mean())
 
