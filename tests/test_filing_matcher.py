@@ -511,3 +511,201 @@ def test_correct_fiscal_year_beats_higher_priority_concept():
     assert result.sec_fact.accession_number == (
         "0001564590-17-014900"
     )
+
+
+# ---------------------------------------------------------------------------
+# Usage of accepted_date with filing_date as fallback
+# ---------------------------------------------------------------------------
+
+def test_get_available_at_prefers_accepted_date():
+    fact = FilingFact(
+        concept="Revenues",
+        value=100.0,
+        unit="USD",
+        period_start=date(2016, 7, 1),
+        period_end=date(2017, 6, 30),
+        fiscal_year=2017,
+        fiscal_period="FY",
+        filing_date=date(2017, 8, 4),
+        accepted_date=datetime(2017, 8, 4, 16, 32, 15),
+        form="10-K",
+        accession_number="0000000000-17-000000",
+        cik="0000789019",
+    )
+
+    matcher = FilingFinancialMatcher()
+
+    assert matcher._get_available_at(fact) == datetime(
+        2017,
+        8,
+        4,
+        16,
+        32,
+        15,
+    )
+
+def test_get_available_at_falls_back_to_filing_date():
+    fact = FilingFact(
+        concept="Revenues",
+        value=100.0,
+        unit="USD",
+        period_start=date(2016, 7, 1),
+        period_end=date(2017, 6, 30),
+        fiscal_year=2017,
+        fiscal_period="FY",
+        filing_date=date(2017, 8, 4),
+        accepted_date=None,
+        form="10-K",
+        accession_number="0000000000-17-000000",
+        cik="0000789019",
+    )
+
+    matcher = FilingFinancialMatcher()
+
+    assert matcher._get_available_at(fact) == datetime(
+        2017,
+        8,
+        4,
+        23,
+        59,
+        59,
+        999999,
+    )
+
+# ---------------------------------------------------------------------------
+# future filing can be excluded 
+# ---------------------------------------------------------------------------
+
+def test_filter_available_as_of_excludes_future_filing():
+    matcher = FilingFinancialMatcher()
+
+    old_fact = FilingFact(
+        concept="Revenues",
+        value=90.0,
+        unit="USD",
+        period_start=date(2016, 7, 1),
+        period_end=date(2017, 6, 30),
+        fiscal_year=2017,
+        fiscal_period="FY",
+        filing_date=date(2017, 8, 4),
+        accepted_date=datetime(2017, 8, 4, 16, 32, 15),
+        form="10-K",
+        accession_number="old",
+        cik="0000789019",
+    )
+
+    future_fact = FilingFact(
+        concept="Revenues",
+        value=100.0,
+        unit="USD",
+        period_start=date(2016, 7, 1),
+        period_end=date(2017, 6, 30),
+        fiscal_year=2017,
+        fiscal_period="FY",
+        filing_date=date(2018, 8, 3),
+        accepted_date=datetime(2018, 8, 3, 16, 32, 15),
+        form="10-K",
+        accession_number="future",
+        cik="0000789019",
+    )
+
+    result = matcher._filter_available_as_of(
+        [old_fact, future_fact],
+        date(2017, 12, 31),
+    )
+
+    assert result == [old_fact]
+
+# ---------------------------------------------------------------------------
+# acceptance timestamp can be used to filter future filings
+# ---------------------------------------------------------------------------
+
+def test_filter_available_as_of_acceptance_timestamp():
+    matcher = FilingFinancialMatcher()
+
+    fact = FilingFact(
+        concept="Revenues",
+        value=100.0,
+        unit="USD",
+        period_start=date(2016, 7, 1),
+        period_end=date(2017, 6, 30),
+        fiscal_year=2017,
+        fiscal_period="FY",
+        filing_date=date(2017, 8, 4),
+        accepted_date=datetime(2017, 8, 4, 16, 32, 15),
+        form="10-K",
+        accession_number="test",
+        cik="0000789019",
+    )
+
+    before = matcher._filter_available_as_of(
+        [fact],
+        datetime(2017, 8, 4, 16, 32, 14),
+    )
+
+    at_acceptance = matcher._filter_available_as_of(
+        [fact],
+        datetime(2017, 8, 4, 16, 32, 15),
+    )
+
+    assert before == []
+    assert at_acceptance == [fact]
+
+# ---------------------------------------------------------------------------
+# match() uses the pit filtering
+# ---------------------------------------------------------------------------
+
+def test_match_respects_as_of_date():
+    matcher = FilingFinancialMatcher()
+
+    old_fact = FilingFact(
+        concept="Revenues",
+        value=90.0,
+        unit="USD",
+        period_start=date(2016, 7, 1),
+        period_end=date(2017, 6, 30),
+        fiscal_year=2017,
+        fiscal_period="FY",
+        filing_date=date(2017, 8, 4),
+        accepted_date=datetime(2017, 8, 4, 16, 32, 15),
+        form="10-K",
+        accession_number="old",
+        cik="0000789019",
+    )
+
+    future_fact = FilingFact(
+        concept="Revenues",
+        value=100.0,
+        unit="USD",
+        period_start=date(2016, 7, 1),
+        period_end=date(2017, 6, 30),
+        fiscal_year=2017,
+        fiscal_period="FY",
+        filing_date=date(2018, 8, 3),
+        accepted_date=datetime(2018, 8, 3, 16, 32, 15),
+        form="10-K",
+        accession_number="future",
+        cik="0000789019",
+    )
+
+    openbb_value = FinancialValue(
+        symbol="MSFT",
+        field="revenue",
+        value=90.0,
+        currency="USD",
+        period_end=date(2017, 6, 30),
+        fiscal_year=2017,
+        fiscal_period="FY",
+        filing_date=date(2017, 8, 4),
+        accepted_date=datetime(2017, 8, 4, 16, 32, 15),
+        provider="openbb",
+    )
+
+    result = matcher.match(
+        openbb_value,
+        [old_fact, future_fact],
+        as_of_date=date(2017, 12, 31),
+    )
+
+    assert result.matched
+    assert result.sec_fact == old_fact

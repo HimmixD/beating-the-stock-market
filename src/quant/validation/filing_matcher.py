@@ -25,6 +25,7 @@ class FilingFinancialMatcher:
         self,
         openbb_value: FinancialValue,
         sec_facts: list[FilingFact],
+        as_of_date: date | datetime | None = None,
     ) -> MatchResult:
 
         possible_concepts = SEC_CONCEPTS.get(
@@ -62,6 +63,11 @@ class FilingFinancialMatcher:
 
         candidates = self._filter_form(
             candidates
+        )
+
+        candidates = self._filter_available_as_of(
+            candidates,
+            as_of_date,
         )
 
         if not candidates:
@@ -112,7 +118,7 @@ class FilingFinancialMatcher:
             relative_difference=relative_difference,
             confidence=confidence,
             reason=(
-                "Exact PIT filing match."
+                "Exact filing match."
                 if matched
                 else "SEC candidate found but values differ."
             ),
@@ -208,6 +214,61 @@ class FilingFinancialMatcher:
         )
 
         return candidates[0]
+
+    def _filter_available_as_of(
+        self,
+        candidates,
+        as_of_date,
+    ):
+        """
+        Keep only SEC facts that were publicly available
+        on or before the PIT cutoff date.
+        """
+
+        if as_of_date is None:
+            return candidates
+
+        if isinstance(as_of_date, date) and not isinstance(
+            as_of_date,
+            datetime,
+        ):
+            as_of_datetime = datetime.combine(
+                as_of_date,
+                datetime.max.time(),
+            )
+        else:
+            as_of_datetime = as_of_date
+
+        return [
+            fact
+            for fact in candidates
+            if self._get_available_at(fact) <= as_of_datetime
+        ]
+
+
+    def _get_available_at(
+        self,
+        fact,
+    ):
+        """
+        Determine when a SEC fact became publicly available.
+
+        accepted_date is preferred because it contains the
+        precise SEC acceptance timestamp.
+
+        filing_date is used as fallback.
+        """
+
+        if fact.accepted_date is not None:
+            return fact.accepted_date
+
+        if fact.filing_date is not None:
+            return datetime.combine(
+                fact.filing_date,
+                datetime.max.time(),
+            )
+
+        return datetime.max
 
     def _calculate_confidence(
         self,
