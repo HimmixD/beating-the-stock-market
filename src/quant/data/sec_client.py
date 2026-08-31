@@ -178,6 +178,11 @@ class SECClient:
         for all SEC submissions available for the company.
         """
 
+        cik = str(cik).zfill(10)
+
+        if cik in self._accepted_dates:
+            return self._accepted_dates[cik]
+
         submissions = self.get_submission_history(cik)
 
         accepted_dates = {}
@@ -196,6 +201,8 @@ class SECClient:
             )
 
             accepted_dates[accession] = accepted_datetime
+
+        self._accepted_dates[cik] = accepted_dates
 
         return accepted_dates
 
@@ -333,3 +340,38 @@ class SECClient:
                     )
 
         return facts
+
+    def get_filings(
+        self,
+        cik: str,
+    ) -> list[dict[str, Any]]:
+
+        """
+        Return SEC filing metadata enriched with parsed acceptance
+        timestamps.
+        """
+
+        submissions = self.get_submission_history(cik)
+
+        filings = []
+
+        for submission in submissions:
+
+            accession = submission.get(
+                "accessionNumber"
+            )
+
+            if not accession:
+                continue
+
+            filing = dict(submission)
+
+            filing["accepted_date"] = (
+                self._parse_accepted_datetime(
+                    submission.get("acceptanceDateTime")
+                )
+            )
+
+            filings.append(filing)
+
+        return filings
