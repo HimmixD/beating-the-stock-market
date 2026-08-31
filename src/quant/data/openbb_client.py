@@ -2,12 +2,14 @@ from openbb import obb
 
 from ..validation.concept_map import OPENBB_FIELDS
 from .models import FinancialValue
+from .request_utils import retry_call
 
 
 class OpenBBClient:
 
     def __init__(self):
         self.provider = "sec"
+        self._statement_cache = {}
 
     def get_statement(
         self,
@@ -16,42 +18,88 @@ class OpenBBClient:
         limit: int = 10,
     ):
 
+        symbol = symbol.upper()
+
+        cache_key = (
+            symbol,
+            statement,
+            limit,
+        )
+
+        # ---------------------------------------------------------------
+        # Cache
+        # ---------------------------------------------------------------
+
+        if cache_key in self._statement_cache:
+
+            return self._statement_cache[
+                cache_key
+            ].copy()
+
+        # ---------------------------------------------------------------
+        # OpenBB request
+        # ---------------------------------------------------------------
+
         if statement == "income":
 
-            result = obb.equity.fundamental.income(
-                symbol=symbol,
-                provider=self.provider,
-                period="annual",
-                limit=limit,
-                pit_mode=True,
-            )
+            def fetch():
+                result = obb.equity.fundamental.income(
+                    symbol=symbol,
+                    provider=self.provider,
+                    period="annual",
+                    limit=limit,
+                    pit_mode=True,
+                )
+
+                return result.to_df()
 
         elif statement == "balance":
 
-            result = obb.equity.fundamental.balance(
-                symbol=symbol,
-                provider=self.provider,
-                period="annual",
-                limit=limit,
-                pit_mode=True,
-            )
+            def fetch():
+                result = obb.equity.fundamental.balance(
+                    symbol=symbol,
+                    provider=self.provider,
+                    period="annual",
+                    limit=limit,
+                    pit_mode=True,
+                )
+
+                return result.to_df()
 
         elif statement == "cash":
 
-            result = obb.equity.fundamental.cash(
-                symbol=symbol,
-                provider=self.provider,
-                period="annual",
-                limit=limit,
-                pit_mode=True,
-            )
+            def fetch():
+                result = obb.equity.fundamental.cash(
+                    symbol=symbol,
+                    provider=self.provider,
+                    period="annual",
+                    limit=limit,
+                    pit_mode=True,
+                )
+
+                return result.to_df()
 
         else:
+
             raise ValueError(
                 f"Unknown statement type: {statement}"
             )
 
-        return result.to_df()
+        dataframe = retry_call(
+            fetch,
+            attempts=4,
+            initial_delay=1.0,
+        )
+
+        # ---------------------------------------------------------------
+        # Cache successful result only
+        # ---------------------------------------------------------------
+
+        self._statement_cache[
+            cache_key
+        ] = dataframe.copy()
+
+        return dataframe
 
     def get_field(
         self,

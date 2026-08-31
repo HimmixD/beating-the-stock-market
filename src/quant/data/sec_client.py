@@ -7,6 +7,7 @@ import requests
 from dotenv import load_dotenv
 
 from .models import FilingFact
+from .request_utils import create_resilient_session
 
 
 load_dotenv()
@@ -26,20 +27,26 @@ class SECClient:
                 "SEC_USER_AGENT environment variable is not set."
             )
 
-        self.session = requests.Session()
+        self.session = create_resilient_session(
+            user_agent=user_agent,
+        )
 
         self.session.headers.update({
-            "User-Agent": user_agent,
             "Accept-Encoding": "gzip, deflate",
             "Host": "data.sec.gov",
         })
 
         # Cache for accession -> accepted timestamp.
-        #
-        # get_facts() can create many FilingFact objects from the
-        # same filing, so we must not query SEC repeatedly for the
-        # same accession number.
-        self._accepted_dates: dict[str, datetime | None] = {}
+        self._accepted_dates: dict[
+            str,
+            datetime | None,
+        ] = {}
+
+        # Cache for complete Company Facts responses.
+        self._company_facts: dict[
+            str,
+            dict[str, Any],
+        ] = {}
 
     def get_company_facts(
         self,
@@ -48,6 +55,13 @@ class SECClient:
 
         cik = str(cik).zfill(10)
 
+        # ---------------------------------------------------------------
+        # In-memory cache
+        # ---------------------------------------------------------------
+
+        if cik in self._company_facts:
+            return self._company_facts[cik]
+
         url = (
             f"{self.BASE_URL}/api/xbrl/companyfacts/"
             f"CIK{cik}.json"
@@ -55,12 +69,16 @@ class SECClient:
 
         response = self.session.get(
             url,
-            timeout=30,
+            timeout=(5, 20),
         )
 
         response.raise_for_status()
 
-        return response.json()
+        data = response.json()
+
+        self._company_facts[cik] = data
+
+        return data
 
     def get_submission_history(
         self,
@@ -84,7 +102,7 @@ class SECClient:
 
         response = self.session.get(
             url,
-            timeout=30,
+            timeout=(5, 20),
         )
 
         response.raise_for_status()
@@ -116,7 +134,7 @@ class SECClient:
 
             file_response = self.session.get(
                 file_url,
-                timeout=30,
+                timeout=(5, 20),
             )
 
             file_response.raise_for_status()

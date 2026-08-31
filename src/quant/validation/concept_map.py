@@ -1,7 +1,14 @@
 OPENBB_FIELDS = {
+    # Income statement
     "revenue": [
         "total_revenue",
         "operating_revenue",
+        "revenue",
+    ],
+
+    "gross_profit": [
+        "gross_profit",
+        "total_gross_profit",
     ],
 
     "operating_income": [
@@ -10,43 +17,35 @@ OPENBB_FIELDS = {
 
     "net_income": [
         "net_income",
-        "net_income_to_common",
     ],
 
-    "income_tax_expense": [
-        "income_tax_expense",
+    # Balance sheet
+    "total_assets": [
+        "total_assets",
     ],
 
-    "depreciation": [
-        "depreciation_expense",
+    "total_liabilities": [
+        "total_liabilities",
     ],
 
-    "amortization": [
-        "amortization_expense",
+    "stockholders_equity": [
+        "stockholders_equity",
+        "total_stockholders_equity",
     ],
 
-    "depreciation_and_amortization": [
-        "depreciation_and_amortization",
+    "cash_and_cash_equivalents": [
+        "cash_and_cash_equivalents",
+        "cash_and_short_term_investments",
     ],
 
-    "basic_eps": [
-        "basic_eps",
+    # Cash flow statement
+    "operating_cash_flow": [
+        "net_cash_from_operating_activities",
+        "net_cash_from_continuing_operating_activities",
     ],
 
-    "diluted_eps": [
-        "diluted_eps",
-    ],
-
-    "weighted_average_basic_shares": [
-        "weighted_ave_basic_shares_os",
-    ],
-
-    "weighted_average_diluted_shares": [
-        "weighted_ave_diluted_shares_os",
-    ],
-
-    "dividends_per_share": [
-        "cash_dividends_per_share",
+    "capital_expenditures": [
+        "purchase_of_plant_property_and_equipment",
     ],
 }
 
@@ -58,6 +57,10 @@ SEC_CONCEPTS = {
         "SalesRevenueNet",
     ],
 
+    "gross_profit": [
+        "GrossProfit",
+    ],
+
     "operating_income": [
         "OperatingIncomeLoss",
     ],
@@ -65,6 +68,31 @@ SEC_CONCEPTS = {
     "net_income": [
         "ProfitLoss",
         "NetIncomeLoss",
+    ],
+
+    "total_assets": [
+        "Assets",
+    ],
+
+    "total_liabilities": [
+        "Liabilities",
+    ],
+
+    "stockholders_equity": [
+        "StockholdersEquity",
+        "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+    ],
+
+    "cash_and_cash_equivalents": [
+        "CashAndCashEquivalentsAtCarryingValue",
+    ],
+
+    "operating_cash_flow": [
+        "NetCashProvidedByUsedInOperatingActivities",
+    ],
+
+    "capital_expenditures": [
+        "PaymentsToAcquirePropertyPlantAndEquipment",
     ],
 
     "income_tax_expense": [
