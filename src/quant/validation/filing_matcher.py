@@ -184,11 +184,26 @@ class FilingFinancialMatcher:
         candidates = sorted(
             candidates,
             key=lambda fact: (
+                # Exact fiscal year match first
+                0
+                if fact.fiscal_year
+                == openbb_value.fiscal_year
+                else 1,
+
+                # Exact fiscal period match
+                0
+                if fact.fiscal_period
+                == openbb_value.fiscal_period
+                else 1,
+
+                # Preferred SEC concept
                 concept_priority.get(
                     fact.concept,
                     999
                 ),
-                fact.filing_date or date.min,
+
+                # Older filing first
+                fact.filing_date or date.max,
             )
         )
 

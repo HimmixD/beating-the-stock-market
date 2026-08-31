@@ -11,7 +11,7 @@ def main():
 
     symbol = "AAPL"
     cik = "0000320193"
-    fiscal_year = 2015
+    fiscal_year = 2009
 
     sec = SECClient()
     openbb = OpenBBClient()
