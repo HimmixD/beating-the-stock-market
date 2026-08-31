@@ -1,15 +1,21 @@
 import os
-from dotenv import load_dotenv
-import requests
-from .models import FilingFact
+
 from datetime import date, datetime
 from typing import Any
 
+import requests
+from dotenv import load_dotenv
+
+from .models import FilingFact
+
+
 load_dotenv()
+
 
 class SECClient:
 
     BASE_URL = "https://data.sec.gov"
+    SEC_BASE_URL = "https://www.sec.gov"
 
     def __init__(self):
 
@@ -28,7 +34,17 @@ class SECClient:
             "Host": "data.sec.gov",
         })
 
-    def get_company_facts(self, cik: str) -> dict[str, Any]:
+        # Cache for accession -> accepted timestamp.
+        #
+        # get_facts() can create many FilingFact objects from the
+        # same filing, so we must not query SEC repeatedly for the
+        # same accession number.
+        self._accepted_dates: dict[str, datetime | None] = {}
+
+    def get_company_facts(
+        self,
+        cik: str,
+    ) -> dict[str, Any]:
 
         cik = str(cik).zfill(10)
 
@@ -37,11 +53,181 @@ class SECClient:
             f"CIK{cik}.json"
         )
 
-        response = self.session.get(url, timeout=30)
+        response = self.session.get(
+            url,
+            timeout=30,
+        )
 
         response.raise_for_status()
 
         return response.json()
+
+    def get_submission_history(
+        self,
+        cik: str,
+    ) -> list[dict[str, Any]]:
+
+        """
+        Return SEC filing metadata for all available submissions.
+
+        The current submissions JSON contains recent filings directly.
+        Older filings are referenced through additional JSON files in
+        the 'files' section.
+        """
+
+        cik = str(cik).zfill(10)
+
+        url = (
+            f"{self.BASE_URL}/submissions/"
+            f"CIK{cik}.json"
+        )
+
+        response = self.session.get(
+            url,
+            timeout=30,
+        )
+
+        response.raise_for_status()
+
+        data = response.json()
+
+        filings = []
+
+        recent = data.get("filings", {}).get("recent", {})
+
+        filings.extend(
+            self._columnar_to_records(recent)
+        )
+
+        for file_info in data.get("filings", {}).get(
+            "files",
+            [],
+        ):
+
+            file_name = file_info.get("name")
+
+            if not file_name:
+                continue
+
+            file_url = (
+                f"{self.BASE_URL}/submissions/"
+                f"{file_name}"
+            )
+
+            file_response = self.session.get(
+                file_url,
+                timeout=30,
+            )
+
+            file_response.raise_for_status()
+
+            historical_data = file_response.json()
+
+            filings.extend(
+                self._columnar_to_records(
+                    historical_data
+                )
+            )
+
+        return filings
+
+    @staticmethod
+    def _columnar_to_records(
+        data: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+
+        """
+        Convert SEC's column-oriented submissions data into
+        one dictionary per filing.
+        """
+
+        if not data:
+            return []
+
+        keys = list(data.keys())
+
+        if not keys:
+            return []
+
+        row_count = len(data[keys[0]])
+
+        records = []
+
+        for index in range(row_count):
+
+            record = {
+                key: data[key][index]
+                for key in keys
+                if index < len(data[key])
+            }
+
+            records.append(record)
+
+        return records
+
+    def get_accepted_dates(
+        self,
+        cik: str,
+    ) -> dict[str, datetime | None]:
+
+        """
+        Return a mapping:
+
+            accession_number -> accepted datetime
+
+        for all SEC submissions available for the company.
+        """
+
+        submissions = self.get_submission_history(cik)
+
+        accepted_dates = {}
+
+        for submission in submissions:
+
+            accession = submission.get(
+                "accessionNumber"
+            )
+
+            if not accession:
+                continue
+
+            accepted_datetime = self._parse_accepted_datetime(
+                submission.get("acceptanceDateTime")
+            )
+
+            accepted_dates[accession] = accepted_datetime
+
+        return accepted_dates
+
+    @staticmethod
+    def _parse_accepted_datetime(
+        value: Any,
+    ) -> datetime | None:
+
+        if not value:
+            return None
+
+        if isinstance(value, datetime):
+            return value
+
+        value = str(value)
+
+        # SEC submissions normally use ISO-style timestamps.
+        try:
+            return datetime.fromisoformat(
+                value.replace("Z", "+00:00")
+            )
+        except ValueError:
+            pass
+
+        # Fallback for compact SEC timestamp format.
+        try:
+            return datetime.strptime(
+                value,
+                "%Y%m%d%H%M%S",
+            )
+        except ValueError:
+            return None
 
     def get_facts(
         self,
@@ -49,11 +235,23 @@ class SECClient:
         concepts: list[str],
     ) -> list[FilingFact]:
 
+        cik = str(cik).zfill(10)
+
         company_facts = self.get_company_facts(cik)
+
+        # -----------------------------------------------------------
+        # SEC filing metadata
+        # -----------------------------------------------------------
+
+        accepted_dates = self.get_accepted_dates(cik)
 
         facts = []
 
-        us_gaap = company_facts.get("facts", {}).get("us-gaap", {})
+        us_gaap = (
+            company_facts
+            .get("facts", {})
+            .get("us-gaap", {})
+        )
 
         for concept in concepts:
 
@@ -62,7 +260,10 @@ class SECClient:
 
             concept_data = us_gaap[concept]
 
-            units = concept_data.get("units", {})
+            units = concept_data.get(
+                "units",
+                {},
+            )
 
             for unit_name, unit_facts in units.items():
 
@@ -71,9 +272,13 @@ class SECClient:
                     if "end" not in fact:
                         continue
 
+                    # ------------------------------------------------
+                    # Period
+                    # ------------------------------------------------
+
                     period_start = None
 
-                    if "start" in fact:
+                    if fact.get("start"):
                         period_start = date.fromisoformat(
                             fact["start"]
                         )
@@ -82,6 +287,10 @@ class SECClient:
                         fact["end"]
                     )
 
+                    # ------------------------------------------------
+                    # Filing date
+                    # ------------------------------------------------
+
                     filing_date = None
 
                     if fact.get("filed"):
@@ -89,12 +298,22 @@ class SECClient:
                             fact["filed"]
                         )
 
+                    # ------------------------------------------------
+                    # Acceptance timestamp
+                    # ------------------------------------------------
+
+                    accession_number = fact.get("accn")
+
                     accepted_date = None
 
-                    if fact.get("accn"):
-                        # Accepted timestamp isn't always exposed
-                        # in Company Facts.
-                        accepted_date = None
+                    if accession_number:
+                        accepted_date = accepted_dates.get(
+                            accession_number
+                        )
+
+                    # ------------------------------------------------
+                    # FilingFact
+                    # ------------------------------------------------
 
                     facts.append(
                         FilingFact(
@@ -108,8 +327,8 @@ class SECClient:
                             filing_date=filing_date,
                             accepted_date=accepted_date,
                             form=fact.get("form"),
-                            accession_number=fact.get("accn"),
-                            cik=str(cik).zfill(10),
+                            accession_number=accession_number,
+                            cik=cik,
                         )
                     )
 

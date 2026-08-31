@@ -208,8 +208,8 @@ class FilingFinancialMatcher:
                     999
                 ),
 
-                # Older filing first
-                fact.filing_date or date.max,
+                # Newest known filing first
+                -self._get_available_at(fact).timestamp(),
             )
         )
 
