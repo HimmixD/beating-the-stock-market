@@ -1,4 +1,5 @@
-from datetime import date, datetime
+from datetime import date, datetime, timezone, time
+from enum import Enum
 
 from ..data.models import (
     FilingFact,
@@ -9,15 +10,45 @@ from ..data.models import (
 from .concept_map import SEC_CONCEPTS
 
 
+class AvailabilityPolicy(str, Enum):
+    STRICT_ACCEPTED_ONLY = "strict_accepted_only"
+    FILED_DATE_EOD_UTC = "filed_date_eod_utc"
+
+
 class FilingFinancialMatcher:
 
     def __init__(
         self,
         value_tolerance: float = 0.0,
         relative_tolerance: float = 1e-9,
+        availability_policy: AvailabilityPolicy = AvailabilityPolicy.STRICT_ACCEPTED_ONLY,
     ):
         self.value_tolerance = value_tolerance
         self.relative_tolerance = relative_tolerance
+        self.availability_policy = availability_policy
+
+    @staticmethod
+    def _to_utc_aware(dt: datetime) -> datetime:
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc)
+
+    @staticmethod
+    def _as_of_to_datetime(as_of_date: date | datetime) -> datetime:
+        if isinstance(as_of_date, datetime):
+            return FilingFinancialMatcher._to_utc_aware(as_of_date)
+        # date => end of day UTC (explicit, deterministic)
+        return datetime.combine(as_of_date, time.max, tzinfo=timezone.utc)
+
+    def _unit_class(self, unit: str | None) -> str:
+        if not unit:
+            return "unknown"
+        u = unit.upper()
+        if u in {"USD", "EUR", "GBP"}:
+            return "currency_amount"
+        if "SHARE" in u:
+            return "shares"
+        return "unknown"
 
     def match(
         self,
@@ -26,72 +57,15 @@ class FilingFinancialMatcher:
         as_of_date: date | datetime | None = None,
     ) -> MatchResult:
 
-        possible_concepts = SEC_CONCEPTS.get(
-            openbb_value.field,
-            [],
-        )
-
+        possible_concepts = SEC_CONCEPTS.get(openbb_value.field, [])
         if not possible_concepts:
-            return MatchResult(
-                matched=False,
-                openbb_value=openbb_value,
-                sec_fact=None,
-                value_difference=None,
-                relative_difference=None,
-                confidence=0.0,
-                reason="No SEC concept mapping exists.",
-            )
+            return MatchResult(False, openbb_value, None, None, None, 0.0, "No SEC concept mapping exists.")
 
-        # ---------------------------------------------------------
-        # 1. SEC concept
-        # ---------------------------------------------------------
-
-        candidates = [
-            fact
-            for fact in sec_facts
-            if fact.concept in possible_concepts
-        ]
-
-        # ---------------------------------------------------------
-        # 2. Exact period end
-        #
-        # fiscal_year is intentionally NOT used here.
-        # The actual period_end is the authoritative period anchor.
-        # ---------------------------------------------------------
-
-        candidates = self._filter_period(
-            openbb_value,
-            candidates,
-        )
-
-        # ---------------------------------------------------------
-        # 3. Fiscal period
-        #
-        # FY/Q1/Q2/Q3 etc. still matters because it describes
-        # the type of reporting period.
-        # ---------------------------------------------------------
-
-        candidates = self._filter_fiscal_period(
-            openbb_value,
-            candidates,
-        )
-
-        # ---------------------------------------------------------
-        # 3.5. form filter
-        # ---------------------------------------------------------
-
-        candidates = self._filter_form(
-            candidates
-        )
-
-        # ---------------------------------------------------------
-        # 4. PIT / availability
-        # ---------------------------------------------------------
-
-        candidates = self._filter_available_as_of(
-            candidates,
-            as_of_date,
-        )
+        candidates = [fact for fact in sec_facts if fact.concept in possible_concepts]
+        candidates = self._filter_period(openbb_value, candidates)
+        candidates = self._filter_fiscal_period(openbb_value, candidates)
+        candidates = self._filter_form(candidates)
+        candidates = self._filter_available_as_of(candidates, as_of_date)
 
         if not candidates:
             return MatchResult(
@@ -104,58 +78,34 @@ class FilingFinancialMatcher:
                 reason="No SEC fact matched the period and availability constraints.",
             )
 
-        # ---------------------------------------------------------
-        # 5. Select best SEC filing
-        # ---------------------------------------------------------
+        best_candidate = self._select_best_candidate(openbb_value, candidates, as_of_date)
 
-        best_candidate = self._select_best_candidate(
-            openbb_value,
-            candidates,
-            as_of_date,
-        )
+        # unit compatibility guard (P0/P1 safety)
+        sec_unit_class = self._unit_class(best_candidate.unit)
+        openbb_unit_class = "currency_amount"  # current mapped metrics are currency amounts
+        if sec_unit_class != "unknown" and sec_unit_class != openbb_unit_class:
+            return MatchResult(
+                matched=False,
+                openbb_value=openbb_value,
+                sec_fact=best_candidate,
+                value_difference=None,
+                relative_difference=None,
+                confidence=0.0,
+                reason=f"Unit mismatch: OpenBB={openbb_unit_class}, SEC={sec_unit_class} ({best_candidate.unit})",
+            )
 
-        openbb_comparison_value = self._normalize_for_comparison(
-            openbb_value.value,
-            openbb_value.field,
-            "openbb",
-        )
+        openbb_comparison_value = self._normalize_for_comparison(openbb_value.value, openbb_value.field, "openbb")
+        sec_comparison_value = self._normalize_for_comparison(best_candidate.value, openbb_value.field, "sec")
 
-        sec_comparison_value = self._normalize_for_comparison(
-            best_candidate.value,
-            openbb_value.field,
-            "sec",
-        )
-
-        difference = (
-            openbb_comparison_value
-            - sec_comparison_value
-        )
-
-        relative_difference = (
-            abs(difference)
-            / max(abs(openbb_comparison_value), 1.0)
-        )
+        difference = openbb_comparison_value - sec_comparison_value
+        relative_difference = abs(difference) / max(abs(openbb_comparison_value), 1.0)
 
         matched = (
             abs(difference) <= self.value_tolerance
             or relative_difference <= self.relative_tolerance
         )
 
-        print(
-            "MATCH DEBUG:",
-            openbb_value.field,
-            openbb_comparison_value,
-            sec_comparison_value,
-            difference,
-            relative_difference,
-            matched,
-        )
-
-        confidence = self._calculate_confidence(
-            openbb_value,
-            best_candidate,
-            matched,
-        )
+        confidence = self._calculate_confidence(openbb_value, best_candidate, matched)
 
         return MatchResult(
             matched=matched,
@@ -164,178 +114,84 @@ class FilingFinancialMatcher:
             value_difference=difference,
             relative_difference=relative_difference,
             confidence=confidence,
-            reason=(
-                "Exact filing match."
-                if matched
-                else "SEC candidate found but values differ."
-            ),
+            reason=("Exact filing match." if matched else "SEC candidate found but values differ."),
         )
 
-    # =============================================================
-    # FILTERING
-    # =============================================================
-
-    def _filter_form(
-        self,
-        candidates: list[FilingFact],
-    ) -> list[FilingFact]:
-
-        preferred_forms = {
-            "10-K",
-            "10-K/A",
-            "10-Q",
-            "10-Q/A",
-        }
-
-        preferred = [
-            fact
-            for fact in candidates
-            if fact.form in preferred_forms
-        ]
-
+    def _filter_form(self, candidates: list[FilingFact]) -> list[FilingFact]:
+        preferred_forms = {"10-K", "10-K/A", "10-Q", "10-Q/A"}
+        preferred = [fact for fact in candidates if fact.form in preferred_forms]
         return preferred or candidates
 
-    def _filter_period(
-        self,
-        openbb_value: FinancialValue,
-        candidates: list[FilingFact],
-    ) -> list[FilingFact]:
+    def _filter_period(self, openbb_value: FinancialValue, candidates: list[FilingFact]) -> list[FilingFact]:
+        return [fact for fact in candidates if fact.period_end == openbb_value.period_end]
 
-        return [
-            fact
-            for fact in candidates
-            if fact.period_end == openbb_value.period_end
-        ]
-
-    def _filter_fiscal_period(
-        self,
-        openbb_value: FinancialValue,
-        candidates: list[FilingFact],
-    ) -> list[FilingFact]:
-
+    def _filter_fiscal_period(self, openbb_value: FinancialValue, candidates: list[FilingFact]) -> list[FilingFact]:
         if not openbb_value.fiscal_period:
             return candidates
-
-        return [
-            fact
-            for fact in candidates
-            if fact.fiscal_period == openbb_value.fiscal_period
-        ]
+        return [fact for fact in candidates if fact.fiscal_period == openbb_value.fiscal_period]
 
     def _filter_available_as_of(
         self,
         candidates: list[FilingFact],
         as_of_date: date | datetime | None,
     ) -> list[FilingFact]:
-
         if as_of_date is None:
             return candidates
 
+        as_of_dt = self._as_of_to_datetime(as_of_date)
         result = []
 
         for fact in candidates:
-
             available_at = self._get_available_at(fact)
-
-            if isinstance(as_of_date, datetime):
-                if available_at <= as_of_date:
-                    result.append(fact)
-
-            else:
-                if available_at.date() <= as_of_date:
-                    result.append(fact)
+            if available_at <= as_of_dt:
+                result.append(fact)
 
         return result
 
-    # =============================================================
-    # CANDIDATE SELECTION
-    # =============================================================
-
-    def _select_best_candidate(
-        self,
-        openbb_value,
-        candidates,
-        as_of_date=None,
-    ):
+    def _select_best_candidate(self, openbb_value, candidates, as_of_date=None):
         concept_priority = {
             concept: index
-            for index, concept in enumerate(
-                SEC_CONCEPTS[openbb_value.field]
-            )
+            for index, concept in enumerate(SEC_CONCEPTS[openbb_value.field])
         }
 
         def accepted_timestamp(fact):
-            if fact.accepted_date is not None:
-                return fact.accepted_date.timestamp()
-
-            if fact.filing_date is not None:
-                return datetime.combine(
-                    fact.filing_date,
-                    datetime.min.time(),
-                ).timestamp()
-
-            return float("inf")
+            available = self._get_available_at(fact)
+            return available.timestamp()
 
         if as_of_date is None:
-            # Ohne PIT-Stichtag:
-            # ursprüngliche veröffentlichte Version bevorzugen.
             candidates = sorted(
                 candidates,
                 key=lambda fact: (
-                    concept_priority.get(
-                        fact.concept,
-                        999,
-                    ),
+                    concept_priority.get(fact.concept, 999),
                     accepted_timestamp(fact),
-                )
+                ),
             )
-
         else:
-            # _filter_available_as_of() hat bereits alle
-            # nach dem Stichtag entfernt.
-            #
-            # Jetzt die zuletzt bekannte Version wählen.
             candidates = sorted(
                 candidates,
                 key=lambda fact: (
-                    concept_priority.get(
-                        fact.concept,
-                        999,
-                    ),
+                    concept_priority.get(fact.concept, 999),
                     -accepted_timestamp(fact),
-                )
+                ),
             )
 
         return candidates[0]
 
-    # =============================================================
-    # AVAILABILITY
-    # =============================================================
-
-    def _get_available_at(
-        self,
-        fact: FilingFact,
-    ) -> datetime:
-
-        """
-        Determine when a SEC fact became publicly available.
-
-        accepted_date is preferred because it contains the precise
-        SEC acceptance timestamp.
-
-        filing_date is used as fallback.
-        """
-
+    def _get_available_at(self, fact: FilingFact) -> datetime:
         if fact.accepted_date is not None:
-            return fact.accepted_date
+            return self._to_utc_aware(fact.accepted_date)
 
-        if fact.filing_date is not None:
-            return datetime.combine(
-                fact.filing_date,
-                datetime.max.time(),
-            )
+        if fact.filing_date is None:
+            return datetime.max.replace(tzinfo=timezone.utc)
 
-        return datetime.max
+        if self.availability_policy == AvailabilityPolicy.STRICT_ACCEPTED_ONLY:
+            return datetime.max.replace(tzinfo=timezone.utc)
+
+        return datetime.combine(
+            fact.filing_date,
+            time.max,
+            tzinfo=timezone.utc,
+        )
 
     # =============================================================
     # CONFIDENCE

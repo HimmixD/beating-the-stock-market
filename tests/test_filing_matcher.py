@@ -1,7 +1,7 @@
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 from quant.data.models import FilingFact, FinancialValue
-from quant.validation.filing_matcher import FilingFinancialMatcher
+from quant.validation.filing_matcher import FilingFinancialMatcher, AvailabilityPolicy
 
 
 # ---------------------------------------------------------------------------
@@ -468,12 +468,7 @@ def test_get_available_at_prefers_accepted_date():
     matcher = FilingFinancialMatcher()
 
     assert matcher._get_available_at(fact) == datetime(
-        2017,
-        8,
-        4,
-        16,
-        32,
-        15,
+        2017, 8, 4, 16, 32, 15, tzinfo=timezone.utc
     )
 
 def test_get_available_at_falls_back_to_filing_date():
@@ -492,16 +487,12 @@ def test_get_available_at_falls_back_to_filing_date():
         cik="0000789019",
     )
 
-    matcher = FilingFinancialMatcher()
+    matcher = FilingFinancialMatcher(
+        availability_policy=AvailabilityPolicy.FILED_DATE_EOD_UTC
+    )
 
     assert matcher._get_available_at(fact) == datetime(
-        2017,
-        8,
-        4,
-        23,
-        59,
-        59,
-        999999,
+        2017, 8, 4, 23, 59, 59, 999999, tzinfo=timezone.utc
     )
 
 # ---------------------------------------------------------------------------
@@ -547,6 +538,29 @@ def test_filter_available_as_of_excludes_future_filing():
     )
 
     assert result == [old_fact]
+
+
+def test_get_available_at_strict_policy_excludes_missing_accepted_date():
+    fact = FilingFact(
+        concept="Revenues",
+        value=100.0,
+        unit="USD",
+        period_start=date(2016, 7, 1),
+        period_end=date(2017, 6, 30),
+        fiscal_year=2017,
+        fiscal_period="FY",
+        filing_date=date(2017, 8, 4),
+        accepted_date=None,
+        form="10-K",
+        accession_number="0000000000-17-000000",
+        cik="0000789019",
+    )
+
+    matcher = FilingFinancialMatcher(
+        availability_policy=AvailabilityPolicy.STRICT_ACCEPTED_ONLY
+    )
+
+    assert matcher._get_available_at(fact) == datetime.max.replace(tzinfo=timezone.utc)
 
 # ---------------------------------------------------------------------------
 # acceptance timestamp can be used to filter future filings

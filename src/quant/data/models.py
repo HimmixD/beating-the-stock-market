@@ -7,6 +7,8 @@ from typing import Optional
 class FilingFact:
     """
     Ein einzelner Financial Fact aus einem SEC Filing.
+
+    accepted_date must be timezone-aware UTC when present.
     """
 
     concept: str
@@ -33,6 +35,8 @@ class FilingFact:
 class FinancialValue:
     """
     Ein standardisierter Financial Value aus OpenBB.
+
+    accepted_date must be timezone-aware UTC when present.
     """
 
     symbol: str

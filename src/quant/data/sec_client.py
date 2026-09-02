@@ -38,17 +38,46 @@ class SECClient:
             "Host": "data.sec.gov",
         })
 
-        # Cache for accession -> accepted timestamp.
-        self._accepted_dates: dict[
-            str,
-            datetime | None,
-        ] = {}
+        self._accepted_dates: dict[str, dict[str, datetime | None]] = {}
+        self._company_facts: dict[str, dict[str, Any]] = {}
 
-        # Cache for complete Company Facts responses.
-        self._company_facts: dict[
-            str,
-            dict[str, Any],
-        ] = {}
+    @staticmethod
+    def _to_utc_aware(dt: datetime) -> datetime:
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc)
+
+    # ... keep get_company_facts / get_submission_history / _columnar_to_records unchanged ...
+
+    @staticmethod
+    def _parse_accepted_datetime(
+        value: Any,
+    ) -> datetime | None:
+
+        if not value:
+            return None
+
+        if isinstance(value, datetime):
+            return SECClient._to_utc_aware(value)
+
+        value = str(value)
+
+        try:
+            parsed = datetime.fromisoformat(
+                value.replace("Z", "+00:00")
+            )
+            return SECClient._to_utc_aware(parsed)
+        except ValueError:
+            pass
+
+        try:
+            parsed = datetime.strptime(
+                value,
+                "%Y%m%d%H%M%S",
+            )
+            return SECClient._to_utc_aware(parsed)
+        except ValueError:
+            return None
 
     def get_company_facts(
         self,
