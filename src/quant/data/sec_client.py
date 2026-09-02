@@ -50,31 +50,21 @@ class SECClient:
     # ... keep get_company_facts / get_submission_history / _columnar_to_records unchanged ...
 
     @staticmethod
-    def _parse_accepted_datetime(
-        value: Any,
-    ) -> datetime | None:
-
+    def _parse_accepted_datetime(value: Any) -> datetime | None:
         if not value:
             return None
-
         if isinstance(value, datetime):
             return SECClient._to_utc_aware(value)
 
         value = str(value)
-
         try:
-            parsed = datetime.fromisoformat(
-                value.replace("Z", "+00:00")
-            )
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
             return SECClient._to_utc_aware(parsed)
         except ValueError:
             pass
 
         try:
-            parsed = datetime.strptime(
-                value,
-                "%Y%m%d%H%M%S",
-            )
+            parsed = datetime.strptime(value, "%Y%m%d%H%M%S")
             return SECClient._to_utc_aware(parsed)
         except ValueError:
             return None

@@ -55,44 +55,25 @@ def test_retry_call_raises_after_all_attempts_fail():
     assert function.call_count == 3
 
 def test_openbb_statement_cache():
-
     client = OpenBBClient()
 
     fake_dataframe = pd.DataFrame(
         {
             "fiscal_year": [2025],
-            "revenue": [100.0],
+            "period_ending": [pd.Timestamp("2025-12-31").date()],
+            "fiscal_period": ["FY"],
+            "total_revenue": [100.0],
         }
     )
 
-    fake_fetch = Mock(
-        return_value=fake_dataframe
-    )
+    client._statement_cache[("sec", "AAPL", "income", 10, "annual", True)] = fake_dataframe.copy()
 
-    # Simulate successful OpenBB request by replacing
-    # the retry layer's target indirectly.
-    client._statement_cache[
-        ("AAPL", "income", 10)
-    ] = fake_dataframe
-
-    result_1 = client.get_statement(
-        symbol="AAPL",
-        statement="income",
-        limit=10,
-    )
-
-    result_2 = client.get_statement(
-        symbol="AAPL",
-        statement="income",
-        limit=10,
-    )
+    result_1 = client.get_statement(symbol="AAPL", statement="income", limit=10)
+    result_2 = client.get_statement(symbol="AAPL", statement="income", limit=10)
 
     assert result_1.equals(fake_dataframe)
     assert result_2.equals(fake_dataframe)
-
-    assert client._statement_cache[
-        ("AAPL", "income", 10)
-    ].equals(fake_dataframe)
+    assert client._statement_cache[("sec", "AAPL", "income", 10, "annual", True)].equals(fake_dataframe)
 
 
 def test_sec_company_facts_cache():
