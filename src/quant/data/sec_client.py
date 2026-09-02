@@ -1,6 +1,6 @@
 import os
 
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Any
 
 import requests
