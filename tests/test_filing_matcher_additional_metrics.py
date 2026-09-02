@@ -346,11 +346,7 @@ def test_real_filing_matches_additional_metric(case):
         openbb_value.fiscal_period
     )
 
-    assert result.sec_fact.value == pytest.approx(
-        openbb_value.value,
-        rel=matcher.relative_tolerance,
-        abs=matcher.value_tolerance,
-    )
+    assert result.value_difference == pytest.approx(0.0)
 
 
 def _statement_for_field(field: str) -> str:

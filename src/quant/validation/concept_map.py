@@ -29,13 +29,11 @@ OPENBB_FIELDS = {
     ],
 
     "stockholders_equity": [
-        "stockholders_equity",
-        "total_stockholders_equity",
+        "total_common_equity",
     ],
 
     "cash_and_cash_equivalents": [
-        "cash_and_cash_equivalents",
-        "cash_and_short_term_investments",
+        "cash_and_equivalents",
     ],
 
     # Cash flow statement
@@ -45,6 +43,7 @@ OPENBB_FIELDS = {
     ],
 
     "capital_expenditures": [
+        "capital_expenditure",
         "purchase_of_plant_property_and_equipment",
     ],
 }
@@ -93,6 +92,7 @@ SEC_CONCEPTS = {
 
     "capital_expenditures": [
         "PaymentsToAcquirePropertyPlantAndEquipment",
+        "PaymentsToAcquireProductiveAssets",
     ],
 
     "income_tax_expense": [

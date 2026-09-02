@@ -111,21 +111,44 @@ class FilingFinancialMatcher:
         best_candidate = self._select_best_candidate(
             openbb_value,
             candidates,
+            as_of_date,
+        )
+
+        openbb_comparison_value = self._normalize_for_comparison(
+            openbb_value.value,
+            openbb_value.field,
+            "openbb",
+        )
+
+        sec_comparison_value = self._normalize_for_comparison(
+            best_candidate.value,
+            openbb_value.field,
+            "sec",
         )
 
         difference = (
-            openbb_value.value
-            - best_candidate.value
+            openbb_comparison_value
+            - sec_comparison_value
         )
 
         relative_difference = (
             abs(difference)
-            / max(abs(openbb_value.value), 1.0)
+            / max(abs(openbb_comparison_value), 1.0)
         )
 
         matched = (
             abs(difference) <= self.value_tolerance
             or relative_difference <= self.relative_tolerance
+        )
+
+        print(
+            "MATCH DEBUG:",
+            openbb_value.field,
+            openbb_comparison_value,
+            sec_comparison_value,
+            difference,
+            relative_difference,
+            matched,
         )
 
         confidence = self._calculate_confidence(
@@ -230,10 +253,10 @@ class FilingFinancialMatcher:
 
     def _select_best_candidate(
         self,
-        openbb_value: FinancialValue,
-        candidates: list[FilingFact],
-    ) -> FilingFact:
-
+        openbb_value,
+        candidates,
+        as_of_date=None,
+    ):
         concept_priority = {
             concept: index
             for index, concept in enumerate(
@@ -241,8 +264,7 @@ class FilingFinancialMatcher:
             )
         }
 
-        def accepted_timestamp(fact: FilingFact) -> float:
-
+        def accepted_timestamp(fact):
             if fact.accepted_date is not None:
                 return fact.accepted_date.timestamp()
 
@@ -252,21 +274,37 @@ class FilingFinancialMatcher:
                     datetime.min.time(),
                 ).timestamp()
 
-            return float("-inf")
+            return float("inf")
 
-        candidates = sorted(
-            candidates,
-            key=lambda fact: (
-                # 1. Preferred SEC concept
-                concept_priority.get(
-                    fact.concept,
-                    999,
-                ),
-
-                # 2. Newest known filing
-                -accepted_timestamp(fact),
+        if as_of_date is None:
+            # Ohne PIT-Stichtag:
+            # ursprüngliche veröffentlichte Version bevorzugen.
+            candidates = sorted(
+                candidates,
+                key=lambda fact: (
+                    concept_priority.get(
+                        fact.concept,
+                        999,
+                    ),
+                    accepted_timestamp(fact),
+                )
             )
-        )
+
+        else:
+            # _filter_available_as_of() hat bereits alle
+            # nach dem Stichtag entfernt.
+            #
+            # Jetzt die zuletzt bekannte Version wählen.
+            candidates = sorted(
+                candidates,
+                key=lambda fact: (
+                    concept_priority.get(
+                        fact.concept,
+                        999,
+                    ),
+                    -accepted_timestamp(fact),
+                )
+            )
 
         return candidates[0]
 
@@ -336,6 +374,22 @@ class FilingFinancialMatcher:
     # =============================================================
     # VALUE NORMALIZATION
     # =============================================================
+
+    def _normalize_for_comparison(
+        self,
+        value: float,
+        field: str,
+        source: str,
+    ) -> float:
+
+        if field == "capital_expenditures":
+            if source == "openbb":
+                return -float(value)
+
+            if source == "sec":
+                return float(value)
+
+        return float(value)
 
     @staticmethod
     def normalize_value(
