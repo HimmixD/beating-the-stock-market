@@ -1,8 +1,12 @@
 from openbb import obb
+from openbb_core.app.model.abstract.error import OpenBBError
+import requests
 
 from ..validation.concept_map import OPENBB_FIELDS
 from .models import FinancialValue
 from .request_utils import retry_call
+from .request_utils import OPENBB_RETRY_EXCEPTIONS
+
 
 
 class OpenBBClient:
@@ -89,8 +93,8 @@ class OpenBBClient:
             fetch,
             attempts=4,
             initial_delay=1.0,
+            exceptions=OPENBB_RETRY_EXCEPTIONS,
         )
-
         # ---------------------------------------------------------------
         # Cache successful result only
         # ---------------------------------------------------------------

@@ -7,8 +7,10 @@ import requests
 from dotenv import load_dotenv
 
 from .models import FilingFact
-from .request_utils import create_resilient_session
-
+from .request_utils import (
+    create_resilient_session,
+    resilient_get,
+)
 
 load_dotenv()
 
@@ -67,9 +69,9 @@ class SECClient:
             f"CIK{cik}.json"
         )
 
-        response = self.session.get(
+        response = resilient_get(
+            self.session,
             url,
-            timeout=(5, 20),
         )
 
         response.raise_for_status()
@@ -100,9 +102,9 @@ class SECClient:
             f"CIK{cik}.json"
         )
 
-        response = self.session.get(
+        response = resilient_get(
+            self.session,
             url,
-            timeout=(5, 20),
         )
 
         response.raise_for_status()
@@ -132,9 +134,9 @@ class SECClient:
                 f"{file_name}"
             )
 
-            file_response = self.session.get(
+            file_response = resilient_get(
+                self.session,
                 file_url,
-                timeout=(5, 20),
             )
 
             file_response.raise_for_status()
