@@ -48,6 +48,7 @@ class FundamentalProvider(ABC):
         field: str,
         fiscal_year: int,
         fiscal_period: str = "FY",
+        as_of_date: date | datetime | None = None,
     ) -> FinancialValue:
         ...
 

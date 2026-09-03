@@ -76,17 +76,20 @@ class FundamentalsService:
             field=field,
             fiscal_year=fiscal_year,
             fiscal_period=fiscal_period,
+            as_of_date=as_of_date,
         )
 
         if as_of_dt is not None:
             if fv.accepted_date is not None:
-                fv.available_at = fv.accepted_date if fv.accepted_date.tzinfo is not None else fv.accepted_date.replace(tzinfo=timezone.utc)
+                fv_available_at = fv.accepted_date if fv.accepted_date.tzinfo is not None else fv.accepted_date.replace(tzinfo=timezone.utc)
             elif fv.filing_date is not None:
-                fv.available_at = datetime.combine(fv.filing_date, time.max, tzinfo=timezone.utc)
+                fv_available_at = datetime.combine(fv.filing_date, time.max, tzinfo=timezone.utc)
             else:
-                raise ValueError(f"Provider '{provider.name}' did not supply availability timestamps for {symbol} FY{fiscal_year} {fiscal_period}; "f"cannot ensure PIT as of {as_of_date!r}.")
-            if fv.available_at > as_of_dt:
-                raise ValueError(f"Requested PIT value for {symbol} FY{fiscal_year} ({field}) not available as of {as_of_date!r}. "f"Value available at {fv.available_at.isoformat()}.")
+                raise ValueError(f"Provider '{provider.name}' did not supply availability timestamps for {symbol} FY{fiscal_year} {fiscal_period};"
+                                 f"cannot ensure PIT as of {as_of_date!r}.")
+            if fv_available_at > as_of_dt:
+                raise ValueError(f"Requested PIT value for {symbol} FY{fiscal_year} ({field}) not available as of {as_of_date!r}."
+                                 f"Value available at {fv.available_at.isoformat()}.")
 
         if use_cache:
             self.cache.put(fv)
