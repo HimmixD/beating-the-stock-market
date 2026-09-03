@@ -35,22 +35,44 @@ class FinancialValueCache:
         self.conn.commit()
 
     @staticmethod
-    def _fp_key(fiscal_period: Optional[str]) -> str:
-        return (fiscal_period or "").strip().upper()
-
-    def get(self, provider: str, symbol: str, field: str, fiscal_year: int, fiscal_period: str = "FY") -> FinancialValue | None:
-        fp_key = self._fp_key(fiscal_period)
-        fiscal_year = int(fiscal_year)
+    def _fp_key(fiscal_period: Optional[str], as_of_date: Optional[date] = None) -> str:
+        """
+        Create a composite key from fiscal_period and as_of_date.
+        as_of_date can be date or datetime; normalize to ISO date string.
+        """
+        fp = (fiscal_period or "").strip().upper()
+        if as_of_date is None:
+            ao_key = ""
+        else:
+            # if datetime given, extract the date portion
+            try:
+                # prefer date() if datetime
+                ao = as_of_date.date() if hasattr(as_of_date, "date") else as_of_date
+            except Exception:
+                ao = as_of_date
+            ao_key = ao.isoformat()
+        return f"{fp}|{ao_key}"
+ 
+    def get(
+        self,
+        provider: str,
+        symbol: str,
+        field: str,
+        fiscal_year: int,
+        fiscal_period: str = "FY",
+        as_of_date: Optional[date] = None,
+     ) -> FinancialValue | None:
+        fp_key = self._fp_key(fiscal_period, as_of_date)
+ 
         row = self.conn.execute(
             """
-            SELECT symbol, field, value, currency, period_end, fiscal_year,
-                   fiscal_period, filing_date, accepted_date, provider
+            SELECT symbol, field, value, currency, period_end, fiscal_year, fiscal_period, filing_date, accepted_date, provider
             FROM financial_values
             WHERE provider=? AND symbol=? AND field=? AND fiscal_year=? AND fiscal_period_key=?
             """,
             (provider, symbol.upper(), field, fiscal_year, fp_key),
         ).fetchone()
-
+ 
         if not row:
             return None
 
@@ -69,9 +91,7 @@ class FinancialValueCache:
 
     def put(self, fv: FinancialValue) -> None:
         fp_key = self._fp_key(fv.fiscal_period)
-
         fiscal_year = int(fv.fiscal_year) if fv.fiscal_year is not None else None
-        value = float(fv.value)
 
         self.conn.execute(
             """
@@ -91,7 +111,7 @@ class FinancialValueCache:
                 fv.filing_date.isoformat() if fv.filing_date else None,
                 fv.accepted_date.isoformat() if fv.accepted_date else None,
                 fv.currency,
-                value,
+                float(fv.value),
                 datetime.now(timezone.utc).isoformat(),
             ),
         )

@@ -8,6 +8,7 @@ res = svc.get_value(
     field="total_assets",
     fiscal_year=2008,
     statement="balance",
+    fiscal_period="FY",
     as_of_date=datetime(2018, 1, 1, tzinfo=timezone.utc),
 )
 
