@@ -34,6 +34,12 @@ class FilingFinancialMatcher:
         return dt.astimezone(timezone.utc)
 
     @staticmethod
+    def _as_datetime_utc(value: date | datetime) -> datetime:
+        if isinstance(value, datetime):
+            return FilingFinancialMatcher._to_utc_aware(value)
+        return datetime.combine(value, time.max, tzinfo=timezone.utc)
+    
+    @staticmethod
     def _as_of_to_datetime(as_of_date: date | datetime) -> datetime:
         if isinstance(as_of_date, datetime):
             return FilingFinancialMatcher._to_utc_aware(as_of_date)
@@ -64,6 +70,11 @@ class FilingFinancialMatcher:
         candidates = [fact for fact in sec_facts if fact.concept in possible_concepts]
         candidates = self._filter_period(openbb_value, candidates)
         candidates = self._filter_fiscal_period(openbb_value, candidates)
+        fy = openbb_value.fiscal_year
+        if fy is not None:
+            near = [f for f in candidates if (f.fiscal_year is None or abs(int(f.fiscal_year) - int(fy)) <= 1)]
+            if near:
+                candidates = near
         candidates = self._filter_form(candidates)
         candidates = self._filter_available_as_of(candidates, as_of_date)
 
@@ -148,50 +159,106 @@ class FilingFinancialMatcher:
 
         return result
 
-    def _select_best_candidate(self, openbb_value, candidates, as_of_date=None):
+    def _select_best_candidate(
+        self,
+        openbb_value: FinancialValue,
+        candidates: list[FilingFact],
+        as_of_date: date | datetime | None = None,
+    ) -> FilingFact:
+        """
+        Ranking strategy:
+
+        1) SEC concept priority (from SEC_CONCEPTS order)
+        2) Fiscal-year proximity to OpenBB FY (if available)
+        3) Time anchor ranking:
+           - PIT mode: latest available fact <= as_of_date
+           - non-PIT: closest to OpenBB anchor if known, else earliest available
+        4) Stable tiebreakers (form priority, accession_number)
+        """
+
         concept_priority = {
-            concept: index
-            for index, concept in enumerate(SEC_CONCEPTS[openbb_value.field])
+            concept: idx
+            for idx, concept in enumerate(SEC_CONCEPTS[openbb_value.field])
         }
 
-        def accepted_timestamp(fact):
-            available = self._get_available_at(fact)
-            return available.timestamp()
+        form_priority = {
+            "10-K": 0,
+            "10-K/A": 1,
+            "10-Q": 2,
+            "10-Q/A": 3,
+        }
 
-        if as_of_date is None:
-            candidates = sorted(
-                candidates,
-                key=lambda fact: (
-                    concept_priority.get(fact.concept, 999),
-                    accepted_timestamp(fact),
-                ),
+        # anchor for non-PIT: OpenBB accepted_date -> filing_date -> period_end EOD
+        openbb_anchor: datetime | None = None
+        if openbb_value.accepted_date is not None:
+            openbb_anchor = self._to_utc_aware(openbb_value.accepted_date)
+        elif openbb_value.filing_date is not None:
+            openbb_anchor = datetime.combine(
+                openbb_value.filing_date,
+                time.max,
+                tzinfo=timezone.utc,
             )
         else:
-            candidates = sorted(
-                candidates,
-                key=lambda fact: (
-                    concept_priority.get(fact.concept, 999),
-                    -accepted_timestamp(fact),
-                ),
+            openbb_anchor = datetime.combine(
+                openbb_value.period_end,
+                time.max,
+                tzinfo=timezone.utc,
             )
 
-        return candidates[0]
+        as_of_dt = self._as_datetime_utc(as_of_date) if as_of_date is not None else None
+
+        def available_at_utc(f: FilingFact) -> datetime:
+            return self._to_utc_aware(self._get_available_at(f))
+
+        def fy_distance(f: FilingFact) -> int:
+            if openbb_value.fiscal_year is None or f.fiscal_year is None:
+                return 999
+            return abs(int(f.fiscal_year) - int(openbb_value.fiscal_year))
+
+        def base_key(f: FilingFact):
+            return (
+                concept_priority.get(f.concept, 999),
+                fy_distance(f),
+                form_priority.get(f.form or "", 99),
+            )
+
+        if as_of_dt is not None:
+            # PIT: pick the most recent known filing at/ before as_of
+            ranked = sorted(
+                candidates,
+                key=lambda f: (
+                    *base_key(f),
+                    -available_at_utc(f).timestamp(),    # latest first
+                    f.accession_number or "",
+                ),
+            )
+            return ranked[0]
+
+        # non-PIT: choose candidate closest to OpenBB anchor;
+        # if tie, earlier availability wins (original filing preference)
+        ranked = sorted(
+            candidates,
+            key=lambda f: (
+                *base_key(f),
+                abs((available_at_utc(f) - openbb_anchor).total_seconds()),
+                available_at_utc(f).timestamp(),
+                f.accession_number or "",
+            ),
+        )
+        return ranked[0]
 
     def _get_available_at(self, fact: FilingFact) -> datetime:
         if fact.accepted_date is not None:
             return self._to_utc_aware(fact.accepted_date)
 
-        if fact.filing_date is None:
-            return datetime.max.replace(tzinfo=timezone.utc)
+        if fact.filing_date is not None:
+            return datetime.combine(
+                fact.filing_date,
+                time.max,
+                tzinfo=timezone.utc,
+            )
 
-        if self.availability_policy == AvailabilityPolicy.STRICT_ACCEPTED_ONLY:
-            return datetime.max.replace(tzinfo=timezone.utc)
-
-        return datetime.combine(
-            fact.filing_date,
-            time.max,
-            tzinfo=timezone.utc,
-        )
+        return datetime.max.replace(tzinfo=timezone.utc)
 
     # =============================================================
     # CONFIDENCE
@@ -211,19 +278,19 @@ class FilingFinancialMatcher:
 
         # Exact period end
         if openbb_value.period_end == sec_fact.period_end:
-            score += 0.35
+            score += 0.45
 
         # Exact fiscal period
         if openbb_value.fiscal_period == sec_fact.fiscal_period:
-            score += 0.15
+            score += 0.20
 
         # Filing date
         if openbb_value.filing_date == sec_fact.filing_date:
-            score += 0.15
+            score += 0.10
 
         # Exact numerical equality
         if openbb_value.value == sec_fact.value:
-            score += 0.15
+            score += 0.25
 
         return min(score, 1.0)
 

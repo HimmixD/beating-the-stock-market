@@ -19,7 +19,7 @@ class GlobalOpenBBProvider(FundamentalProvider):
     name = "global_openbb"
 
     def __init__(self):
-        self.openbb = OpenBBClient()
+        self.openbb = OpenBBClient(provider="global_openbb")
 
     def supports_symbol(self, symbol: str) -> bool:
         # fallback provider: supports everything not handled by SEC

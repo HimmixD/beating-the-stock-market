@@ -1,5 +1,7 @@
-from dataclasses import dataclass
+from __future__ import annotations
+
 from datetime import date, datetime
+from dataclasses import dataclass
 
 from quant.data.models import FinancialValue, MatchResult
 from quant.validation.filing_matcher import FilingFinancialMatcher
@@ -42,7 +44,6 @@ class FundamentalsService:
         resolved = self.resolver.resolve(symbol)
         provider = resolved.provider
 
-        # ---------- cache lookup ----------
         if use_cache:
             cached = self.cache.get(
                 provider=provider.name,
@@ -60,13 +61,7 @@ class FundamentalsService:
                     cache_hit=True,
                 )
 
-        # ---------- provider fetch ----------
-        df = provider.get_statement(
-            symbol=symbol,
-            statement=statement,
-            limit=limit,
-        )
-
+        df = provider.get_statement(symbol=symbol, statement=statement, limit=limit)
         fv = provider.get_financial_value(
             dataframe=df,
             symbol=symbol,
@@ -75,17 +70,12 @@ class FundamentalsService:
             fiscal_period=fiscal_period,
         )
 
-        # ---------- cache store ----------
         if use_cache:
             self.cache.put(fv)
 
-        # ---------- optional SEC-style matching ----------
         match_result = None
         if field in SEC_CONCEPTS:
-            facts = provider.get_facts(
-                symbol=symbol,
-                concepts=SEC_CONCEPTS[field],
-            )
+            facts = provider.get_facts(symbol=symbol, concepts=SEC_CONCEPTS[field])
             if facts:
                 match_result = self.matcher.match(
                     openbb_value=fv,

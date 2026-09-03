@@ -38,16 +38,9 @@ class FinancialValueCache:
     def _fp_key(fiscal_period: Optional[str]) -> str:
         return (fiscal_period or "").strip().upper()
 
-    def get(
-        self,
-        provider: str,
-        symbol: str,
-        field: str,
-        fiscal_year: int,
-        fiscal_period: str = "FY",
-    ) -> FinancialValue | None:
+    def get(self, provider: str, symbol: str, field: str, fiscal_year: int, fiscal_period: str = "FY") -> FinancialValue | None:
         fp_key = self._fp_key(fiscal_period)
-
+        fiscal_year = int(fiscal_year)
         row = self.conn.execute(
             """
             SELECT symbol, field, value, currency, period_end, fiscal_year,
@@ -61,45 +54,44 @@ class FinancialValueCache:
         if not row:
             return None
 
-        period_end = date.fromisoformat(row[4]) if row[4] else None
-        filing_date = date.fromisoformat(row[7]) if row[7] else None
-        accepted_date = datetime.fromisoformat(row[8]) if row[8] else None
-
         return FinancialValue(
             symbol=row[0],
             field=row[1],
             value=float(row[2]),
             currency=row[3],
-            period_end=period_end,
+            period_end=date.fromisoformat(row[4]) if row[4] else None,
             fiscal_year=row[5],
             fiscal_period=row[6],
-            filing_date=filing_date,
-            accepted_date=accepted_date,
+            filing_date=date.fromisoformat(row[7]) if row[7] else None,
+            accepted_date=datetime.fromisoformat(row[8]) if row[8] else None,
             provider=row[9],
         )
 
     def put(self, fv: FinancialValue) -> None:
         fp_key = self._fp_key(fv.fiscal_period)
 
+        fiscal_year = int(fv.fiscal_year) if fv.fiscal_year is not None else None
+        value = float(fv.value)
+
         self.conn.execute(
             """
             INSERT OR REPLACE INTO financial_values
             (provider, symbol, field, fiscal_year, fiscal_period, fiscal_period_key,
-             period_end, filing_date, accepted_date, currency, value, fetched_at_utc)
+            period_end, filing_date, accepted_date, currency, value, fetched_at_utc)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
-                fv.provider,
-                fv.symbol.upper(),
-                fv.field,
-                fv.fiscal_year,
+                str(fv.provider),
+                str(fv.symbol).upper(),
+                str(fv.field),
+                fiscal_year,
                 fv.fiscal_period,
                 fp_key,
                 fv.period_end.isoformat() if fv.period_end else None,
                 fv.filing_date.isoformat() if fv.filing_date else None,
                 fv.accepted_date.isoformat() if fv.accepted_date else None,
                 fv.currency,
-                float(fv.value),
+                value,
                 datetime.now(timezone.utc).isoformat(),
             ),
         )

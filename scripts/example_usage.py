@@ -1,8 +1,14 @@
+from datetime import datetime, timezone
 from quant.data.provider_bootstrap import build_fundamentals_service
 
 svc = build_fundamentals_service()
-a = svc.get_value("AAPL", "revenue", 2017, "income")
-b = svc.get_value("AAPL", "revenue", 2017, "income")
 
-print("1st cache_hit:", a.cache_hit)  # expected False
-print("2nd cache_hit:", b.cache_hit)  # expected True
+res = svc.get_value(
+    symbol="JPM",
+    field="total_assets",
+    fiscal_year=2008,
+    statement="balance",
+    as_of_date=datetime(2018, 1, 1, tzinfo=timezone.utc),
+)
+
+print("RESULT:", res)
