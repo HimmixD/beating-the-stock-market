@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 from typing import Any, Optional
 
 from quant.data.models import FilingFact, FinancialValue
@@ -104,6 +104,9 @@ class GlobalOpenBBProvider(FundamentalProvider):
             filing_date=row.get("filing_date"),
             accepted_date=_to_utc_aware_or_none(row.get("accepted_date")),
             provider=self.name,
+            source="openbb",
+            pit_status="provider_claimed",
+            confidence=0.6,
         )
 
     def get_facts(self, symbol: str, concepts: list[str]) -> list[FilingFact]:

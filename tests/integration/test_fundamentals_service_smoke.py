@@ -1,6 +1,8 @@
+import pytest
+
 from quant.data.provider_bootstrap import build_fundamentals_service
 
-
+@pytest.mark.integration
 def test_service_resolves_provider_without_location_in_api():
     service = build_fundamentals_service()
 

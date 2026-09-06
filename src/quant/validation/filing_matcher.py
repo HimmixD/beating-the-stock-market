@@ -248,15 +248,17 @@ class FilingFinancialMatcher:
         return ranked[0]
 
     def _get_available_at(self, fact: FilingFact) -> datetime:
+        if self.availability_policy == AvailabilityPolicy.STRICT_ACCEPTED_ONLY:
+            if fact.accepted_date is None:
+                return datetime.max.replace(tzinfo=timezone.utc)
+            return self._to_utc_aware(fact.accepted_date)
+
+        # FILED_DATE_EOD_UTC fallback policy
         if fact.accepted_date is not None:
             return self._to_utc_aware(fact.accepted_date)
 
         if fact.filing_date is not None:
-            return datetime.combine(
-                fact.filing_date,
-                time.max,
-                tzinfo=timezone.utc,
-            )
+            return datetime.combine(fact.filing_date, time.max, tzinfo=timezone.utc)
 
         return datetime.max.replace(tzinfo=timezone.utc)
 

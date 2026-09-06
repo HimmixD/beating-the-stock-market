@@ -21,38 +21,36 @@ class FinancialValueCache:
                 field TEXT NOT NULL,
                 fiscal_year INTEGER NOT NULL,
                 fiscal_period TEXT,
-                fiscal_period_key TEXT NOT NULL,
+                as_of_key TEXT NOT NULL,              -- NEW
                 period_end TEXT,
                 filing_date TEXT,
                 accepted_date TEXT,
                 currency TEXT,
                 value REAL NOT NULL,
+                source TEXT,
+                pit_status TEXT,
+                confidence REAL,
+                source_concept TEXT,
+                source_unit TEXT,
+                source_form TEXT,
+                source_accession TEXT,
+                source_cik TEXT,
                 fetched_at_utc TEXT NOT NULL,
-                PRIMARY KEY (provider, symbol, field, fiscal_year, fiscal_period_key)
+                PRIMARY KEY (provider, symbol, field, fiscal_year, fiscal_period, as_of_key)
             )
             """
         )
         self.conn.commit()
 
     @staticmethod
-    def _fp_key(fiscal_period: Optional[str], as_of_date: Optional[date] = None) -> str:
-        """
-        Create a composite key from fiscal_period and as_of_date.
-        as_of_date can be date or datetime; normalize to ISO date string.
-        """
-        fp = (fiscal_period or "").strip().upper()
+    def _as_of_key(as_of_date: Optional[date | datetime]) -> str:
         if as_of_date is None:
-            ao_key = ""
-        else:
-            # if datetime given, extract the date portion
-            try:
-                # prefer date() if datetime
-                ao = as_of_date.date() if hasattr(as_of_date, "date") else as_of_date
-            except Exception:
-                ao = as_of_date
-            ao_key = ao.isoformat()
-        return f"{fp}|{ao_key}"
- 
+            return "NONE"
+        if isinstance(as_of_date, datetime):
+            dt = as_of_date if as_of_date.tzinfo else as_of_date.replace(tzinfo=timezone.utc)
+            return dt.astimezone(timezone.utc).isoformat()
+        return datetime.combine(as_of_date, datetime.max.time(), tzinfo=timezone.utc).isoformat()
+
     def get(
         self,
         provider: str,
@@ -60,19 +58,21 @@ class FinancialValueCache:
         field: str,
         fiscal_year: int,
         fiscal_period: str = "FY",
-        as_of_date: Optional[date] = None,
-     ) -> FinancialValue | None:
-        fp_key = self._fp_key(fiscal_period, as_of_date)
- 
+        as_of_date: Optional[date | datetime] = None,
+    ) -> FinancialValue | None:
+        as_of_key = self._as_of_key(as_of_date)
+
         row = self.conn.execute(
             """
-            SELECT symbol, field, value, currency, period_end, fiscal_year, fiscal_period, filing_date, accepted_date, provider
+            SELECT symbol, field, value, currency, period_end, fiscal_year, fiscal_period,
+                   filing_date, accepted_date, provider, source, pit_status, confidence,
+                   source_concept, source_unit, source_form, source_accession, source_cik
             FROM financial_values
-            WHERE provider=? AND symbol=? AND field=? AND fiscal_year=? AND fiscal_period_key=?
+            WHERE provider=? AND symbol=? AND field=? AND fiscal_year=? AND fiscal_period=? AND as_of_key=?
             """,
-            (provider, symbol.upper(), field, fiscal_year, fp_key),
+            (provider, symbol.upper(), field, fiscal_year, fiscal_period, as_of_key),
         ).fetchone()
- 
+
         if not row:
             return None
 
@@ -87,31 +87,49 @@ class FinancialValueCache:
             filing_date=date.fromisoformat(row[7]) if row[7] else None,
             accepted_date=datetime.fromisoformat(row[8]) if row[8] else None,
             provider=row[9],
+            source=row[10] or "unknown",
+            pit_status=row[11] or "unknown",
+            confidence=float(row[12] or 0.0),
+            source_concept=row[13],
+            source_unit=row[14],
+            source_form=row[15],
+            source_accession=row[16],
+            source_cik=row[17],
         )
 
-    def put(self, fv: FinancialValue) -> None:
-        fp_key = self._fp_key(fv.fiscal_period)
+    def put(self, fv: FinancialValue, as_of_date: Optional[date | datetime] = None) -> None:
+        as_of_key = self._as_of_key(as_of_date)
         fiscal_year = int(fv.fiscal_year) if fv.fiscal_year is not None else None
 
         self.conn.execute(
             """
             INSERT OR REPLACE INTO financial_values
-            (provider, symbol, field, fiscal_year, fiscal_period, fiscal_period_key,
-            period_end, filing_date, accepted_date, currency, value, fetched_at_utc)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (provider, symbol, field, fiscal_year, fiscal_period, as_of_key,
+             period_end, filing_date, accepted_date, currency, value,
+             source, pit_status, confidence, source_concept, source_unit, source_form,
+             source_accession, source_cik, fetched_at_utc)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 str(fv.provider),
                 str(fv.symbol).upper(),
                 str(fv.field),
                 fiscal_year,
-                fv.fiscal_period,
-                fp_key,
+                fv.fiscal_period or "FY",
+                as_of_key,
                 fv.period_end.isoformat() if fv.period_end else None,
                 fv.filing_date.isoformat() if fv.filing_date else None,
                 fv.accepted_date.isoformat() if fv.accepted_date else None,
                 fv.currency,
                 float(fv.value),
+                fv.source,
+                fv.pit_status,
+                float(fv.confidence),
+                fv.source_concept,
+                fv.source_unit,
+                fv.source_form,
+                fv.source_accession,
+                fv.source_cik,
                 datetime.now(timezone.utc).isoformat(),
             ),
         )

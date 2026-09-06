@@ -245,36 +245,6 @@ class SECClient:
 
         return accepted_dates
 
-    @staticmethod
-    def _parse_accepted_datetime(
-        value: Any,
-    ) -> datetime | None:
-
-        if not value:
-            return None
-
-        if isinstance(value, datetime):
-            return value
-
-        value = str(value)
-
-        # SEC submissions normally use ISO-style timestamps.
-        try:
-            return datetime.fromisoformat(
-                value.replace("Z", "+00:00")
-            )
-        except ValueError:
-            pass
-
-        # Fallback for compact SEC timestamp format.
-        try:
-            return datetime.strptime(
-                value,
-                "%Y%m%d%H%M%S",
-            )
-        except ValueError:
-            return None
-
     def get_facts(
         self,
         cik: str,

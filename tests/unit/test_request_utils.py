@@ -1,4 +1,5 @@
 import requests
+from quant.data.request_utils import retry_call
 
 from quant.data.request_utils import (
     DEFAULT_TIMEOUT,
@@ -51,66 +52,6 @@ def test_create_resilient_session_uses_timeout_session():
     assert isinstance(session, TimeoutSession)
     assert session.timeout == DEFAULT_TIMEOUT
 
-
-from quant.data.request_utils import (
-    DEFAULT_TIMEOUT,
-    TimeoutSession,
-    create_resilient_session,
-)
-
-
-def test_timeout_session_uses_default_timeout(monkeypatch):
-    session = TimeoutSession()
-
-    captured = {}
-
-    def fake_request(self, method, url, **kwargs):
-        captured["timeout"] = kwargs.get("timeout")
-        return None
-
-    monkeypatch.setattr(
-        requests.Session,
-        "request",
-        fake_request,
-    )
-
-    session.get("https://example.com")
-
-    assert captured["timeout"] == DEFAULT_TIMEOUT
-
-
-def test_timeout_session_allows_explicit_timeout(monkeypatch):
-    session = TimeoutSession()
-
-    captured = {}
-
-    def fake_request(self, method, url, **kwargs):
-        captured["timeout"] = kwargs.get("timeout")
-        return None
-
-    monkeypatch.setattr(
-        requests.Session,
-        "request",
-        fake_request,
-    )
-
-    explicit_timeout = (10, 60)
-
-    session.get(
-        "https://example.com",
-        timeout=explicit_timeout,
-    )
-
-    assert captured["timeout"] == explicit_timeout
-
-
-def test_create_resilient_session_uses_timeout_session():
-    session = create_resilient_session()
-
-    assert isinstance(session, TimeoutSession)
-    assert session.timeout == DEFAULT_TIMEOUT
-
-from quant.data.request_utils import retry_call
 
 
 def test_retry_call_retries_after_request_exception(monkeypatch):
