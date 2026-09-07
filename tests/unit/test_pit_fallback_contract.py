@@ -7,7 +7,6 @@ def test_non_us_fallback_is_tagged():
         symbol="NESN.SW",
         field="revenue",
         fiscal_year=2023,
-        statement="income",
         as_of_date=datetime(2024, 3, 1, tzinfo=timezone.utc),
         use_cache=False,
     )

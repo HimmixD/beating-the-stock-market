@@ -13,5 +13,4 @@ def build_fundamentals_service() -> FundamentalsService:
     )
     global_provider = GlobalOpenBBProvider()
     resolver = ProviderResolver(sec_provider=sec, global_provider=global_provider)
-    matcher = FilingFinancialMatcher()
-    return FundamentalsService(resolver=resolver, matcher=matcher)
+    return FundamentalsService(resolver=resolver)

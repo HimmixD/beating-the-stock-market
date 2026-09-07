@@ -74,7 +74,6 @@ def test_sec_provider_pit_selection(monkeypatch):
     # as_of before acceptance should raise
     with pytest.raises(ValueError):
         provider.get_financial_value(
-            dataframe=None,
             symbol="JPM",
             field="total_assets",
             fiscal_year=2008,
@@ -84,7 +83,6 @@ def test_sec_provider_pit_selection(monkeypatch):
 
     # as_of after acceptance should return a FinancialValue and include accepted_date from the SEC fact
     res = provider.get_financial_value(
-        dataframe=None,
         symbol="JPM",
         field="total_assets",
         fiscal_year=2008,

@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from datetime import date, datetime
 from enum import Enum
-from dataclasses import dataclass
-from typing import Optional, Any
 
-from quant.data.models import FinancialValue, FilingFact
+from quant.data.models import FinancialValue
 
 
 class AvailabilityQuality(str, Enum):
@@ -20,8 +19,8 @@ class AvailabilityQuality(str, Enum):
 class ProviderMetadata:
     provider: str
     availability_quality: AvailabilityQuality
-    country: Optional[str] = None
-    exchange: Optional[str] = None
+    country: str | None = None
+    exchange: str | None = None
 
 
 class FundamentalProvider(ABC):
@@ -32,32 +31,14 @@ class FundamentalProvider(ABC):
         ...
 
     @abstractmethod
-    def get_statement(
-        self,
-        symbol: str,
-        statement: str,
-        limit: int = 10,
-    ) -> Any:
-        ...
-
-    @abstractmethod
     def get_financial_value(
         self,
-        dataframe: Any,
         symbol: str,
         field: str,
         fiscal_year: int,
         fiscal_period: str = "FY",
         as_of_date: date | datetime | None = None,
     ) -> FinancialValue:
-        ...
-
-    @abstractmethod
-    def get_facts(
-        self,
-        symbol: str,
-        concepts: list[str],
-    ) -> list[FilingFact]:
         ...
 
     @abstractmethod

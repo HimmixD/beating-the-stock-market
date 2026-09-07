@@ -1263,7 +1263,6 @@ def test_real_aapl_revenue_pit_boundary():
         symbol="AAPL",
         field="revenue",
         fiscal_year=2009,
-        statement="income",
         as_of_date=None,
     )
     fv = result_nonpit.financial_value
@@ -1284,7 +1283,6 @@ def test_real_aapl_revenue_pit_boundary():
             symbol="AAPL",
             field="revenue",
             fiscal_year=2009,
-            statement="income",
             as_of_date=before,
         )
 
@@ -1293,7 +1291,6 @@ def test_real_aapl_revenue_pit_boundary():
         symbol="AAPL",
         field="revenue",
         fiscal_year=2009,
-        statement="income",
         as_of_date=at_time,
     )
     assert res_at.financial_value is not None
@@ -1307,7 +1304,6 @@ def test_real_aapl_revenue_pit_boundary():
         symbol="AAPL",
         field="revenue",
         fiscal_year=2009,
-        statement="income",
         as_of_date=after,
     )
     assert res_after.financial_value is not None

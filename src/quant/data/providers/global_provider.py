@@ -35,9 +35,6 @@ class GlobalOpenBBProvider(FundamentalProvider):
         # fallback provider: supports everything not handled by SEC
         return True
 
-    def get_statement(self, symbol: str, statement: str, limit: int = 10):
-        return self.openbb.get_statement(symbol=symbol, statement=statement, limit=limit)
-
     def get_financial_value(
         self,
         dataframe: Any,

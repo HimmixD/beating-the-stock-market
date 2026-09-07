@@ -6,6 +6,18 @@ from typing import Optional
 
 from quant.data.fundamentals_service import FundamentalsService
 
+RAW_FIELDS = {
+    "revenue",
+    "gross_profit",
+    "operating_income",
+    "net_income",
+    "total_assets",
+    "total_liabilities",
+    "stockholders_equity",
+    "cash_and_cash_equivalents",
+    "operating_cash_flow",
+    "capital_expenditures",
+}
 
 @dataclass(frozen=True)
 class MetricValue:
@@ -16,20 +28,6 @@ class MetricValue:
     fiscal_year: int
     provider: str
     note: str | None = None
-
-
-STATEMENT_BY_FIELD = {
-    "revenue": "income",
-    "gross_profit": "income",
-    "operating_income": "income",
-    "net_income": "income",
-    "total_assets": "balance",
-    "total_liabilities": "balance",
-    "stockholders_equity": "balance",
-    "cash_and_cash_equivalents": "balance",
-    "operating_cash_flow": "cash",
-    "capital_expenditures": "cash",
-}
 
 
 class MetricsEngine:
@@ -49,15 +47,11 @@ class MetricsEngine:
         needed_raw = self._expand_dependencies(metrics)
 
         for field in needed_raw:
-            statement = STATEMENT_BY_FIELD.get(field)
-            if not statement:
-                continue
             try:
                 result = self.service.get_value(
                     symbol=symbol,
                     field=field,
                     fiscal_year=fiscal_year,
-                    statement=statement,
                     as_of_date=as_of_date,
                 )
                 raw_cache[field] = result
@@ -92,7 +86,7 @@ class MetricsEngine:
     def _expand_dependencies(self, metrics: list[str]) -> list[str]:
         deps = set()
         for m in metrics:
-            if m in STATEMENT_BY_FIELD:
+            if m in RAW_FIELDS:
                 deps.add(m)
             elif m == "roic":
                 deps |= {"operating_income", "total_assets", "cash_and_cash_equivalents", "total_liabilities"}

@@ -3,8 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime, timezone, time
 from dataclasses import dataclass
 
-from quant.data.models import FinancialValue, MatchResult
-from quant.validation.filing_matcher import FilingFinancialMatcher
+from quant.data.models import FinancialValue
 from quant.data.providers.resolver import ProviderResolver
 from quant.data.cache_store import FinancialValueCache
 
@@ -14,7 +13,6 @@ class FundamentalQueryResult:
     financial_value: FinancialValue
     provider_name: str
     provider_reason: str
-    match_result: MatchResult | None
     cache_hit: bool = False
 
 
@@ -22,11 +20,9 @@ class FundamentalsService:
     def __init__(
         self,
         resolver: ProviderResolver,
-        matcher: FilingFinancialMatcher,
         cache: FinancialValueCache | None = None,
     ):
         self.resolver = resolver
-        self.matcher = matcher
         self.cache = cache or FinancialValueCache()
 
     def get_value(
@@ -34,10 +30,8 @@ class FundamentalsService:
         symbol: str,
         field: str,
         fiscal_year: int,
-        statement: str,
         as_of_date: date | datetime | None = None,
         fiscal_period: str = "FY",
-        limit: int = 20,
         use_cache: bool = True,
     ) -> FundamentalQueryResult:
         resolved = self.resolver.resolve(symbol)
@@ -64,13 +58,10 @@ class FundamentalsService:
                     financial_value=cached,
                     provider_name=provider.name,
                     provider_reason=f"{resolved.reason} (cache)",
-                    match_result=None,
                     cache_hit=True,
                 )
 
-        df = provider.get_statement(symbol=symbol, statement=statement, limit=limit)
         fv = provider.get_financial_value(
-            dataframe=df,
             symbol=symbol,
             field=field,
             fiscal_year=fiscal_year,
@@ -100,6 +91,5 @@ class FundamentalsService:
             financial_value=fv,
             provider_name=provider.name,
             provider_reason=resolved.reason,
-            match_result=None,
             cache_hit=False,
         )
