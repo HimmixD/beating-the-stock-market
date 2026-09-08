@@ -47,8 +47,6 @@ class SECClient:
             return dt.replace(tzinfo=timezone.utc)
         return dt.astimezone(timezone.utc)
 
-    # ... keep get_company_facts / get_submission_history / _columnar_to_records unchanged ...
-
     @staticmethod
     def _parse_accepted_datetime(value: Any) -> datetime | None:
         if not value:
