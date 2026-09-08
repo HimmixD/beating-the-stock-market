@@ -31,6 +31,15 @@ class SQLiteStore:
                     PRIMARY KEY (ticker, concept, fy, fp, accepted, provider)
                 )
             """)
+            # Tabelle für Aktiensplits
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS stock_splits (
+                    ticker TEXT,
+                    date TEXT,
+                    split_ratio REAL,
+                    PRIMARY KEY (ticker, date)
+                )
+            """)
             conn.commit()
 
     def save_mapping(self, ticker: str, cik: str, provider: str = "sec"):
@@ -79,3 +88,20 @@ class SQLiteStore:
                     "accession": res[4]
                 }
             return None
+
+    def save_splits(self, records: list):
+        """Erwartet eine Liste von Tuples: (ticker, date, split_ratio)"""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.executemany("""
+                INSERT OR REPLACE INTO stock_splits (ticker, date, split_ratio)
+                VALUES (?, ?, ?)
+            """, records)
+            conn.commit()
+
+    def get_splits(self, ticker: str) -> list:
+        """Gibt eine Liste von Dicts mit allen Splits eines Tickers zurück."""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            # Absteigend sortiert (neueste Splits zuerst)
+            res = conn.execute("SELECT date, split_ratio FROM stock_splits WHERE ticker = ? ORDER BY date DESC", (ticker,)).fetchall()
+            return [dict(row) for row in res]
