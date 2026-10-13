@@ -43,6 +43,8 @@ class GlobalProvider(BaseProvider):
                             fy,
                             "FY",
                             filed_date,
+                            # accepted: filed_date as fallback, PIT filtering via
+                            # SQLiteStore.get_pit_value(as_of_date) filters by accepted <= as_of_date
                             filed_date,         # accepted fallback für Global
                             "ANNUAL",           # form
                             None,               # accession (gibt es bei OpenBB/yfinance nicht)

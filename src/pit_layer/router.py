@@ -12,8 +12,15 @@ class PitRouter:
         self.actions_provider = ActionsProvider(self.cache)
 
     def _is_us_ticker(self, ticker: str) -> bool:
-        # US-Ticker haben in der Regel keinen Punkt (kein Börsenkürzel wie .VI oder .DE)
-        return "." not in ticker
+        # Enhanced routing: check known international exchange suffixes first
+        international_suffixes = [".VI", ".DE", ".TO", ".L", ".PA", ".SA", ".MC", ".IS", ".SW"]
+        if any(ticker.endswith(s) for s in international_suffixes):
+            return False
+        # Check for dot in ticker (traditional heuristic)
+        if "." in ticker:
+            return False
+        # Default to US ticker
+        return True
 
     def get_value(self, ticker: str, concept: str, year: int, period: str = "FY", as_of_date: Optional[str] = None) -> Optional[dict]:
         if self._is_us_ticker(ticker):
