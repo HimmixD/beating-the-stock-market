@@ -1,0 +1,18 @@
+{
+  "0": "SecProvider",
+  "1": "router.py",
+  "2": "10 Identified Problems",
+  "3": "Fixes Applied to Pit-Aware Base Layer",
+  "4": "PitRouter",
+  "5": "test_pit_suit.py",
+  "6": "SQLiteStore",
+  "7": "sec_client.py",
+  "8": "GlobalProvider",
+  "9": "test_price_client.py",
+  "10": "quant-project",
+  "11": "README.md",
+  "12": "cache/__init__.py",
+  "13": "clients/__init__.py",
+  "14": "pit_layer/__init__.py",
+  "15": "providers/__init__.py"
+}

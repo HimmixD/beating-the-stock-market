@@ -1,0 +1,4 @@
+1. KONTEXT-AUFBAU: Bevor du Code änderst, nutze `git ls-files` und lese `ARCHITECTURE.md` sowie `graphify-out/GRAPH_REPORT.md` (falls vorhanden). Verwende `tree` nur gefiltert, nie über `venv/`, `.btsm_venv/`, `__pycache__/` oder `graphify-out/cache/`.
+2. TESTS: Führe nach jeder Änderung an der Logik im Terminal `pytest` aus.
+3. SPRACHE: Kommuniziere mit dem Nutzer auf Deutsch, Code und Kommentare auf Englisch.
+4. DB-PFAD: Lies und schreibe `database.db` nur im Projektroot; starte Befehle immer aus `c:\Users\elias\github\btsm`.
