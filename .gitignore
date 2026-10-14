@@ -211,4 +211,5 @@ __marimo__/
 *.db
 *.db-journal
 graphify-out/cache/
+graphify-out/????-??-??/
 

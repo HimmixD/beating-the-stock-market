@@ -46,26 +46,13 @@
       "source_location": "L6"
     },
     {
-      "id": "src_pit_layer_clients_openbb_client_openbbclient",
-      "label": "OpenBBClient",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "router.py",
-      "file_type": "code",
-      "norm_label": "openbbclient",
-      "source_file": "src/pit_layer/clients/openbb_client.py",
-      "source_location": "L10"
-    },
-    {
       "id": "src_pit_layer_clients_price_client_priceclient",
       "label": "PriceClient",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 4,
-      "community_name": "PitRouter",
+      "community": 1,
+      "community_name": "router.py",
       "file_type": "code",
       "norm_label": "priceclient",
       "source_file": "src/pit_layer/clients/price_client.py",
@@ -109,6 +96,19 @@
       "norm_label": "sqlitestore",
       "source_file": "src/pit_layer/cache/sqlite_store.py",
       "source_location": "L4"
+    },
+    {
+      "id": "src_pit_layer_clients_openbb_client_openbbclient",
+      "label": "OpenBBClient",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "GlobalProvider",
+      "file_type": "code",
+      "norm_label": "openbbclient",
+      "source_file": "src/pit_layer/clients/openbb_client.py",
+      "source_location": "L10"
     },
     {
       "id": "src_pit_layer_providers_global_provider_globalprovider",
@@ -269,19 +269,31 @@
       "source_location": "L7"
     },
     {
-      "id": "src_pit_layer_clients_openbb_client_openbbclient_fetch_fundamentals",
-      "label": ".fetch_fundamentals()",
+      "id": "src_pit_layer_clients_price_client_priceclient_fetch_historical_prices",
+      "label": ".fetch_historical_prices()",
       "_callable": true,
       "_origin": "ast",
       "community": 1,
       "community_name": "router.py",
       "file_type": "code",
-      "norm_label": ".fetch_fundamentals()",
-      "source_file": "src/pit_layer/clients/openbb_client.py",
-      "source_location": "L16"
+      "norm_label": ".fetch_historical_prices()",
+      "source_file": "src/pit_layer/clients/price_client.py",
+      "source_location": "L9"
     },
     {
-      "id": "src_pit_layer_clients_openbb_client_openbbclient_init",
+      "id": "src_pit_layer_clients_price_client_priceclient_fetch_splits",
+      "label": ".fetch_splits()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "router.py",
+      "file_type": "code",
+      "norm_label": ".fetch_splits()",
+      "source_file": "src/pit_layer/clients/price_client.py",
+      "source_location": "L30"
+    },
+    {
+      "id": "src_pit_layer_clients_price_client_priceclient_init",
       "label": ".__init__()",
       "_callable": true,
       "_origin": "ast",
@@ -289,20 +301,44 @@
       "community_name": "router.py",
       "file_type": "code",
       "norm_label": ".__init__()",
-      "source_file": "src/pit_layer/clients/openbb_client.py",
-      "source_location": "L11"
+      "source_file": "src/pit_layer/clients/price_client.py",
+      "source_location": "L6"
     },
     {
-      "id": "tests_test_pit_router",
-      "label": "router()",
+      "id": "tests_test_price_client_price_client",
+      "label": "price_client()",
       "_callable": true,
       "_origin": "ast",
-      "community": 2,
-      "community_name": "10 Identified Problems",
+      "community": 1,
+      "community_name": "router.py",
       "file_type": "code",
-      "norm_label": "router()",
-      "source_file": "tests/test_pit.py",
-      "source_location": "L5"
+      "norm_label": "price_client()",
+      "source_file": "tests/test_price_client.py",
+      "source_location": "L6"
+    },
+    {
+      "id": "tests_test_price_client_test_fetch_historical_prices_apple",
+      "label": "test_fetch_historical_prices_apple()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "router.py",
+      "file_type": "code",
+      "norm_label": "test_fetch_historical_prices_apple()",
+      "source_file": "tests/test_price_client.py",
+      "source_location": "L9"
+    },
+    {
+      "id": "tests_test_price_client_test_fetch_historical_prices_invalid_ticker",
+      "label": "test_fetch_historical_prices_invalid_ticker()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "router.py",
+      "file_type": "code",
+      "norm_label": "test_fetch_historical_prices_invalid_ticker()",
+      "source_file": "tests/test_price_client.py",
+      "source_location": "L22"
     },
     {
       "id": "tests_test_pit_test_pit_time_travel",
@@ -317,18 +353,6 @@
       "source_location": "L18"
     },
     {
-      "id": "tests_test_pit_test_router_apple_revenue",
-      "label": "test_router_apple_revenue()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "10 Identified Problems",
-      "file_type": "code",
-      "norm_label": "test_router_apple_revenue()",
-      "source_file": "tests/test_pit.py",
-      "source_location": "L8"
-    },
-    {
       "id": "src_pit_layer_cache_sqlite_store_sqlitestore_get_pit_value",
       "label": ".get_pit_value()",
       "_callable": true,
@@ -339,18 +363,6 @@
       "norm_label": ".get_pit_value()",
       "source_file": "src/pit_layer/cache/sqlite_store.py",
       "source_location": "L66"
-    },
-    {
-      "id": "src_pit_layer_router_pitrouter_is_us_ticker",
-      "label": "._is_us_ticker()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "Fixes Applied to Pit-Aware Base Layer",
-      "file_type": "code",
-      "norm_label": "._is_us_ticker()",
-      "source_file": "src/pit_layer/router.py",
-      "source_location": "L14"
     },
     {
       "id": "src_pit_layer_utils_fuzzy_concept_match",
@@ -387,42 +399,6 @@
       "norm_label": "run_all_commands()",
       "source_file": "scripts/explore_commands.py",
       "source_location": "L13"
-    },
-    {
-      "id": "src_pit_layer_clients_price_client_priceclient_fetch_historical_prices",
-      "label": ".fetch_historical_prices()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "PitRouter",
-      "file_type": "code",
-      "norm_label": ".fetch_historical_prices()",
-      "source_file": "src/pit_layer/clients/price_client.py",
-      "source_location": "L9"
-    },
-    {
-      "id": "src_pit_layer_clients_price_client_priceclient_fetch_splits",
-      "label": ".fetch_splits()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "PitRouter",
-      "file_type": "code",
-      "norm_label": ".fetch_splits()",
-      "source_file": "src/pit_layer/clients/price_client.py",
-      "source_location": "L30"
-    },
-    {
-      "id": "src_pit_layer_clients_price_client_priceclient_init",
-      "label": ".__init__()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "PitRouter",
-      "file_type": "code",
-      "norm_label": ".__init__()",
-      "source_file": "src/pit_layer/clients/price_client.py",
-      "source_location": "L6"
     },
     {
       "id": "src_pit_layer_providers_actions_provider_actionsprovider_fetch_and_cache",
@@ -497,7 +473,19 @@
       "source_location": "L8"
     },
     {
-      "id": "tests_test_actions_router",
+      "id": "src_pit_layer_router_pitrouter_is_us_ticker",
+      "label": "._is_us_ticker()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "PitRouter",
+      "file_type": "code",
+      "norm_label": "._is_us_ticker()",
+      "source_file": "src/pit_layer/router.py",
+      "source_location": "L14"
+    },
+    {
+      "id": "tests_test_pit_router",
       "label": "router()",
       "_callable": true,
       "_origin": "ast",
@@ -505,32 +493,8 @@
       "community_name": "test_pit_suit.py",
       "file_type": "code",
       "norm_label": "router()",
-      "source_file": "tests/test_actions.py",
+      "source_file": "tests/test_pit.py",
       "source_location": "L5"
-    },
-    {
-      "id": "tests_test_actions_test_apple_stock_splits",
-      "label": "test_apple_stock_splits()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 5,
-      "community_name": "test_pit_suit.py",
-      "file_type": "code",
-      "norm_label": "test_apple_stock_splits()",
-      "source_file": "tests/test_actions.py",
-      "source_location": "L8"
-    },
-    {
-      "id": "tests_test_actions_test_no_split_stock",
-      "label": "test_no_split_stock()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 5,
-      "community_name": "test_pit_suit.py",
-      "file_type": "code",
-      "norm_label": "test_no_split_stock()",
-      "source_file": "tests/test_actions.py",
-      "source_location": "L25"
     },
     {
       "id": "tests_test_pit_suit_router",
@@ -591,6 +555,18 @@
       "norm_label": "test_sec_provider_apple_revenue()",
       "source_file": "tests/test_pit_suit.py",
       "source_location": "L16"
+    },
+    {
+      "id": "tests_test_pit_test_router_apple_revenue",
+      "label": "test_router_apple_revenue()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "test_pit_suit.py",
+      "file_type": "code",
+      "norm_label": "test_router_apple_revenue()",
+      "source_file": "tests/test_pit.py",
+      "source_location": "L8"
     },
     {
       "id": "src_pit_layer_cache_sqlite_store_sqlitestore_get_cik",
@@ -725,6 +701,30 @@
       "source_location": "L23"
     },
     {
+      "id": "src_pit_layer_clients_openbb_client_openbbclient_fetch_fundamentals",
+      "label": ".fetch_fundamentals()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "GlobalProvider",
+      "file_type": "code",
+      "norm_label": ".fetch_fundamentals()",
+      "source_file": "src/pit_layer/clients/openbb_client.py",
+      "source_location": "L16"
+    },
+    {
+      "id": "src_pit_layer_clients_openbb_client_openbbclient_init",
+      "label": ".__init__()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "GlobalProvider",
+      "file_type": "code",
+      "norm_label": ".__init__()",
+      "source_file": "src/pit_layer/clients/openbb_client.py",
+      "source_location": "L11"
+    },
+    {
       "id": "src_pit_layer_providers_global_provider_globalprovider_enrich_result",
       "label": "._enrich_result()",
       "_callable": true,
@@ -797,40 +797,40 @@
       "source_location": "L18"
     },
     {
-      "id": "tests_test_price_client_price_client",
-      "label": "price_client()",
+      "id": "tests_test_actions_router",
+      "label": "router()",
       "_callable": true,
       "_origin": "ast",
       "community": 9,
-      "community_name": "test_price_client.py",
+      "community_name": "test_actions.py",
       "file_type": "code",
-      "norm_label": "price_client()",
-      "source_file": "tests/test_price_client.py",
-      "source_location": "L6"
+      "norm_label": "router()",
+      "source_file": "tests/test_actions.py",
+      "source_location": "L5"
     },
     {
-      "id": "tests_test_price_client_test_fetch_historical_prices_apple",
-      "label": "test_fetch_historical_prices_apple()",
+      "id": "tests_test_actions_test_apple_stock_splits",
+      "label": "test_apple_stock_splits()",
       "_callable": true,
       "_origin": "ast",
       "community": 9,
-      "community_name": "test_price_client.py",
+      "community_name": "test_actions.py",
       "file_type": "code",
-      "norm_label": "test_fetch_historical_prices_apple()",
-      "source_file": "tests/test_price_client.py",
-      "source_location": "L9"
+      "norm_label": "test_apple_stock_splits()",
+      "source_file": "tests/test_actions.py",
+      "source_location": "L8"
     },
     {
-      "id": "tests_test_price_client_test_fetch_historical_prices_invalid_ticker",
-      "label": "test_fetch_historical_prices_invalid_ticker()",
+      "id": "tests_test_actions_test_no_split_stock",
+      "label": "test_no_split_stock()",
       "_callable": true,
       "_origin": "ast",
       "community": 9,
-      "community_name": "test_price_client.py",
+      "community_name": "test_actions.py",
       "file_type": "code",
-      "norm_label": "test_fetch_historical_prices_invalid_ticker()",
-      "source_file": "tests/test_price_client.py",
-      "source_location": "L22"
+      "norm_label": "test_no_split_stock()",
+      "source_file": "tests/test_actions.py",
+      "source_location": "L25"
     },
     {
       "id": "abc",
@@ -844,28 +844,26 @@
       "source_location": ""
     },
     {
-      "id": "docs_architecture_report",
-      "label": "ARCHITECTURE_REPORT.md",
+      "id": "src_pit_layer_providers_base",
+      "label": "base.py",
       "_origin": "ast",
       "community": 0,
       "community_name": "SecProvider",
-      "file_type": "document",
-      "node_kind": "page",
-      "norm_label": "architecture_report.md",
-      "source_file": "docs/ARCHITECTURE_REPORT.md",
+      "file_type": "code",
+      "norm_label": "base.py",
+      "source_file": "src/pit_layer/providers/base.py",
       "source_location": "L1"
     },
     {
-      "id": "docs_architecture_report_1_ghost_files_redundancies",
-      "label": "1. Ghost Files / Redundancies",
+      "id": "src_pit_layer_providers_sec_provider",
+      "label": "sec_provider.py",
       "_origin": "ast",
       "community": 0,
       "community_name": "SecProvider",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "1. ghost files / redundancies",
-      "source_file": "docs/ARCHITECTURE_REPORT.md",
-      "source_location": "L5"
+      "file_type": "code",
+      "norm_label": "sec_provider.py",
+      "source_file": "src/pit_layer/providers/sec_provider.py",
+      "source_location": "L1"
     },
     {
       "id": "docs_architecture_report_2_architecture_findings_source_code_unchanged",
@@ -878,42 +876,6 @@
       "norm_label": "2. architecture findings (source code unchanged)",
       "source_file": "docs/ARCHITECTURE_REPORT.md",
       "source_location": "L16"
-    },
-    {
-      "id": "docs_architecture_report_3_recommendations_out_of_scope_for_cleanup",
-      "label": "3. Recommendations (out of scope for cleanup)",
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "SecProvider",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "3. recommendations (out of scope for cleanup)",
-      "source_file": "docs/ARCHITECTURE_REPORT.md",
-      "source_location": "L32"
-    },
-    {
-      "id": "docs_architecture_report_architecture_report",
-      "label": "Architecture Report",
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "SecProvider",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "architecture report",
-      "source_file": "docs/ARCHITECTURE_REPORT.md",
-      "source_location": "L1"
-    },
-    {
-      "id": "docs_archive_analysis_summary_7_missing_configuration_validation",
-      "label": "7. **Missing Configuration Validation**",
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "SecProvider",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "7. **missing configuration validation**",
-      "source_file": "docs/archive/ANALYSIS_SUMMARY.md",
-      "source_location": "L62"
     },
     {
       "id": "src_pit_layer_clients_sec_client_rationale_17",
@@ -960,13 +922,13 @@
       "source_location": "L101"
     },
     {
-      "id": "any",
-      "label": "Any",
+      "id": "dataframe",
+      "label": "DataFrame",
       "_origin": "ast",
       "community": 1,
       "community_name": "router.py",
       "file_type": "code",
-      "norm_label": "any",
+      "norm_label": "dataframe",
       "source_file": "",
       "source_location": ""
     },
@@ -1026,17 +988,6 @@
       "source_location": "L1"
     },
     {
-      "id": "src_pit_layer_providers_base",
-      "label": "base.py",
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "router.py",
-      "file_type": "code",
-      "norm_label": "base.py",
-      "source_file": "src/pit_layer/providers/base.py",
-      "source_location": "L1"
-    },
-    {
       "id": "src_pit_layer_providers_global_provider",
       "label": "global_provider.py",
       "_origin": "ast",
@@ -1045,17 +996,6 @@
       "file_type": "code",
       "norm_label": "global_provider.py",
       "source_file": "src/pit_layer/providers/global_provider.py",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_pit_layer_providers_sec_provider",
-      "label": "sec_provider.py",
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "router.py",
-      "file_type": "code",
-      "norm_label": "sec_provider.py",
-      "source_file": "src/pit_layer/providers/sec_provider.py",
       "source_location": "L1"
     },
     {
@@ -1070,17 +1010,6 @@
       "source_location": "L1"
     },
     {
-      "id": "src_pit_layer_utils",
-      "label": "utils.py",
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "router.py",
-      "file_type": "code",
-      "norm_label": "utils.py",
-      "source_file": "src/pit_layer/utils.py",
-      "source_location": "L1"
-    },
-    {
       "id": "tests_test_global_provider",
       "label": "test_global_provider.py",
       "_origin": "ast",
@@ -1092,15 +1021,70 @@
       "source_location": "L1"
     },
     {
-      "id": "src_pit_layer_clients_openbb_client_rationale_17",
-      "label": "Holt Fundamentaldaten \u00fcber OpenBB f\u00fcr globale Ticker.",
+      "id": "tests_test_price_client",
+      "label": "test_price_client.py",
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "router.py",
+      "file_type": "code",
+      "norm_label": "test_price_client.py",
+      "source_file": "tests/test_price_client.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tests_test_price_client_py_fixture",
+      "label": "fixture",
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "router.py",
+      "file_type": "code",
+      "norm_label": "fixture",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "src_pit_layer_clients_price_client_rationale_10",
+      "label": "Holt historische OHLCV-Kursdaten (Open, High, Low, Close, Volume) f\u00fcr einen\u2026",
       "_origin": "ast",
       "community": 1,
       "community_name": "router.py",
       "file_type": "rationale",
-      "norm_label": "holt fundamentaldaten uber openbb fur globale ticker.",
-      "source_file": "src/pit_layer/clients/openbb_client.py",
-      "source_location": "L17"
+      "norm_label": "holt historische ohlcv-kursdaten (open, high, low, close, volume) fur einen...",
+      "source_file": "src/pit_layer/clients/price_client.py",
+      "source_location": "L10"
+    },
+    {
+      "id": "src_pit_layer_clients_price_client_rationale_31",
+      "label": "Holt historische Aktiensplits f\u00fcr einen Ticker via yfinance. Gibt ein leeres\u2026",
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "router.py",
+      "file_type": "rationale",
+      "norm_label": "holt historische aktiensplits fur einen ticker via yfinance. gibt ein leeres...",
+      "source_file": "src/pit_layer/clients/price_client.py",
+      "source_location": "L31"
+    },
+    {
+      "id": "tests_test_price_client_rationale_10",
+      "label": "Testet, ob historische Kursdaten f\u00fcr Apple geladen werden k\u00f6nnen.",
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "router.py",
+      "file_type": "rationale",
+      "norm_label": "testet, ob historische kursdaten fur apple geladen werden konnen.",
+      "source_file": "tests/test_price_client.py",
+      "source_location": "L10"
+    },
+    {
+      "id": "tests_test_price_client_rationale_23",
+      "label": "Testet das Verhalten bei einem ung\u00fcltigen Ticker.",
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "router.py",
+      "file_type": "rationale",
+      "norm_label": "testet das verhalten bei einem ungultigen ticker.",
+      "source_file": "tests/test_price_client.py",
+      "source_location": "L23"
     },
     {
       "id": "pkg_quant_project",
@@ -1171,28 +1155,6 @@
       "norm_label": "providers/__init__.py",
       "source_file": "src/pit_layer/providers/__init__.py",
       "source_location": null
-    },
-    {
-      "id": "tests_test_pit",
-      "label": "test_pit.py",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "10 Identified Problems",
-      "file_type": "code",
-      "norm_label": "test_pit.py",
-      "source_file": "tests/test_pit.py",
-      "source_location": "L1"
-    },
-    {
-      "id": "tests_test_pit_py_fixture",
-      "label": "fixture",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "10 Identified Problems",
-      "file_type": "code",
-      "norm_label": "fixture",
-      "source_file": "",
-      "source_location": ""
     },
     {
       "id": "docs_archive_analysis_summary",
@@ -1374,15 +1336,15 @@
       "source_location": "L19"
     },
     {
-      "id": "tests_test_pit_rationale_9",
-      "label": "Testet, ob Apple-Umsatz f\u00fcr 2023 korrekt geladen wird.",
+      "id": "src_pit_layer_utils",
+      "label": "utils.py",
       "_origin": "ast",
-      "community": 2,
-      "community_name": "10 Identified Problems",
-      "file_type": "rationale",
-      "norm_label": "testet, ob apple-umsatz fur 2023 korrekt geladen wird.",
-      "source_file": "tests/test_pit.py",
-      "source_location": "L9"
+      "community": 3,
+      "community_name": "Fixes Applied to Pit-Aware Base Layer",
+      "file_type": "code",
+      "norm_label": "utils.py",
+      "source_file": "src/pit_layer/utils.py",
+      "source_location": "L1"
     },
     {
       "id": "docs_archive_analysis_summary_1_pitrouter_router_py",
@@ -1433,18 +1395,6 @@
       "source_location": "L31"
     },
     {
-      "id": "docs_archive_analysis_summary_4_oversimplified_us_non_us_routing",
-      "label": "4. **Oversimplified US/Non-US Routing**",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "Fixes Applied to Pit-Aware Base Layer",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "4. **oversimplified us/non-us routing**",
-      "source_file": "docs/archive/ANALYSIS_SUMMARY.md",
-      "source_location": "L50"
-    },
-    {
       "id": "docs_archive_analysis_summary_core_architecture",
       "label": "Core Architecture",
       "_origin": "ast",
@@ -1491,18 +1441,6 @@
       "norm_label": "fix 1: global provider pit filtering (critical)",
       "source_file": "docs/archive/FIXES_SUMMARY.md",
       "source_location": "L5"
-    },
-    {
-      "id": "docs_archive_fixes_summary_fix_2_enhanced_ticker_routing",
-      "label": "Fix 2: Enhanced Ticker Routing",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "Fixes Applied to Pit-Aware Base Layer",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "fix 2: enhanced ticker routing",
-      "source_file": "docs/archive/FIXES_SUMMARY.md",
-      "source_location": "L22"
     },
     {
       "id": "docs_archive_fixes_summary_fix_3_expanded_concept_mapping",
@@ -1587,13 +1525,13 @@
       "source_location": "L92"
     },
     {
-      "id": "dataframe",
-      "label": "DataFrame",
+      "id": "priceclient",
+      "label": "PriceClient",
       "_origin": "ast",
       "community": 4,
       "community_name": "PitRouter",
       "file_type": "code",
-      "norm_label": "dataframe",
+      "norm_label": "priceclient",
       "source_file": "",
       "source_location": ""
     },
@@ -1609,6 +1547,78 @@
       "source_location": "L1"
     },
     {
+      "id": "docs_architecture_report",
+      "label": "ARCHITECTURE_REPORT.md",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "PitRouter",
+      "file_type": "document",
+      "node_kind": "page",
+      "norm_label": "architecture_report.md",
+      "source_file": "docs/ARCHITECTURE_REPORT.md",
+      "source_location": "L1"
+    },
+    {
+      "id": "docs_architecture_report_1_ghost_files_redundancies",
+      "label": "1. Ghost Files / Redundancies",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "PitRouter",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "1. ghost files / redundancies",
+      "source_file": "docs/ARCHITECTURE_REPORT.md",
+      "source_location": "L5"
+    },
+    {
+      "id": "docs_architecture_report_3_recommendations_out_of_scope_for_cleanup",
+      "label": "3. Recommendations (out of scope for cleanup)",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "PitRouter",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "3. recommendations (out of scope for cleanup)",
+      "source_file": "docs/ARCHITECTURE_REPORT.md",
+      "source_location": "L32"
+    },
+    {
+      "id": "docs_architecture_report_architecture_report",
+      "label": "Architecture Report",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "PitRouter",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "architecture report",
+      "source_file": "docs/ARCHITECTURE_REPORT.md",
+      "source_location": "L1"
+    },
+    {
+      "id": "docs_archive_analysis_summary_4_oversimplified_us_non_us_routing",
+      "label": "4. **Oversimplified US/Non-US Routing**",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "PitRouter",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "4. **oversimplified us/non-us routing**",
+      "source_file": "docs/archive/ANALYSIS_SUMMARY.md",
+      "source_location": "L50"
+    },
+    {
+      "id": "docs_archive_fixes_summary_fix_2_enhanced_ticker_routing",
+      "label": "Fix 2: Enhanced Ticker Routing",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "PitRouter",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "fix 2: enhanced ticker routing",
+      "source_file": "docs/archive/FIXES_SUMMARY.md",
+      "source_location": "L22"
+    },
+    {
       "id": "scripts_explore_commands_rationale_1",
       "label": "========================================================= PIT DATA LAYER -\u2026",
       "_origin": "ast",
@@ -1618,28 +1628,6 @@
       "norm_label": "========================================================= pit data layer -...",
       "source_file": "scripts/explore_commands.py",
       "source_location": "L1"
-    },
-    {
-      "id": "src_pit_layer_clients_price_client_rationale_10",
-      "label": "Holt historische OHLCV-Kursdaten (Open, High, Low, Close, Volume) f\u00fcr einen\u2026",
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "PitRouter",
-      "file_type": "rationale",
-      "norm_label": "holt historische ohlcv-kursdaten (open, high, low, close, volume) fur einen...",
-      "source_file": "src/pit_layer/clients/price_client.py",
-      "source_location": "L10"
-    },
-    {
-      "id": "src_pit_layer_clients_price_client_rationale_31",
-      "label": "Holt historische Aktiensplits f\u00fcr einen Ticker via yfinance. Gibt ein leeres\u2026",
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "PitRouter",
-      "file_type": "rationale",
-      "norm_label": "holt historische aktiensplits fur einen ticker via yfinance. gibt ein leeres...",
-      "source_file": "src/pit_layer/clients/price_client.py",
-      "source_location": "L31"
     },
     {
       "id": "src_pit_layer_providers_actions_provider_rationale_14",
@@ -1664,18 +1652,18 @@
       "source_location": "L32"
     },
     {
-      "id": "tests_test_actions",
-      "label": "test_actions.py",
+      "id": "tests_test_pit",
+      "label": "test_pit.py",
       "_origin": "ast",
       "community": 5,
       "community_name": "test_pit_suit.py",
       "file_type": "code",
-      "norm_label": "test_actions.py",
-      "source_file": "tests/test_actions.py",
+      "norm_label": "test_pit.py",
+      "source_file": "tests/test_pit.py",
       "source_location": "L1"
     },
     {
-      "id": "tests_test_actions_py_fixture",
+      "id": "tests_test_pit_py_fixture",
       "label": "fixture",
       "_origin": "ast",
       "community": 5,
@@ -1708,25 +1696,14 @@
       "source_location": ""
     },
     {
-      "id": "tests_test_actions_rationale_26",
-      "label": "Testet das Verhalten bei einer Aktie ohne historische Splits (z.B. Berkshire\u2026",
+      "id": "tests_test_pit_rationale_9",
+      "label": "Testet, ob Apple-Umsatz f\u00fcr 2023 korrekt geladen wird.",
       "_origin": "ast",
       "community": 5,
       "community_name": "test_pit_suit.py",
       "file_type": "rationale",
-      "norm_label": "testet das verhalten bei einer aktie ohne historische splits (z.b. berkshire...",
-      "source_file": "tests/test_actions.py",
-      "source_location": "L26"
-    },
-    {
-      "id": "tests_test_actions_rationale_9",
-      "label": "Testet, ob die historischen Splits von Apple korrekt geladen und gecached\u2026",
-      "_origin": "ast",
-      "community": 5,
-      "community_name": "test_pit_suit.py",
-      "file_type": "rationale",
-      "norm_label": "testet, ob die historischen splits von apple korrekt geladen und gecached...",
-      "source_file": "tests/test_actions.py",
+      "norm_label": "testet, ob apple-umsatz fur 2023 korrekt geladen wird.",
+      "source_file": "tests/test_pit.py",
       "source_location": "L9"
     },
     {
@@ -1912,6 +1889,40 @@
       "source_location": ""
     },
     {
+      "id": "any",
+      "label": "Any",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "GlobalProvider",
+      "file_type": "code",
+      "norm_label": "any",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "docs_archive_analysis_summary_7_missing_configuration_validation",
+      "label": "7. **Missing Configuration Validation**",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "GlobalProvider",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "7. **missing configuration validation**",
+      "source_file": "docs/archive/ANALYSIS_SUMMARY.md",
+      "source_location": "L62"
+    },
+    {
+      "id": "src_pit_layer_clients_openbb_client_rationale_17",
+      "label": "Holt Fundamentaldaten \u00fcber OpenBB f\u00fcr globale Ticker.",
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "GlobalProvider",
+      "file_type": "rationale",
+      "norm_label": "holt fundamentaldaten uber openbb fur globale ticker.",
+      "source_file": "src/pit_layer/clients/openbb_client.py",
+      "source_location": "L17"
+    },
+    {
       "id": "tests_test_global_provider_rationale_19",
       "label": "Testet, ob der GlobalProvider Daten korrekt mit 10 Bindings in den Cache\u2026",
       "_origin": "ast",
@@ -1934,48 +1945,48 @@
       "source_location": "L6"
     },
     {
-      "id": "tests_test_price_client",
-      "label": "test_price_client.py",
+      "id": "tests_test_actions",
+      "label": "test_actions.py",
       "_origin": "ast",
       "community": 9,
-      "community_name": "test_price_client.py",
+      "community_name": "test_actions.py",
       "file_type": "code",
-      "norm_label": "test_price_client.py",
-      "source_file": "tests/test_price_client.py",
+      "norm_label": "test_actions.py",
+      "source_file": "tests/test_actions.py",
       "source_location": "L1"
     },
     {
-      "id": "tests_test_price_client_py_fixture",
+      "id": "tests_test_actions_py_fixture",
       "label": "fixture",
       "_origin": "ast",
       "community": 9,
-      "community_name": "test_price_client.py",
+      "community_name": "test_actions.py",
       "file_type": "code",
       "norm_label": "fixture",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "tests_test_price_client_rationale_10",
-      "label": "Testet, ob historische Kursdaten f\u00fcr Apple geladen werden k\u00f6nnen.",
+      "id": "tests_test_actions_rationale_26",
+      "label": "Testet das Verhalten bei einer Aktie ohne historische Splits (z.B. Berkshire\u2026",
       "_origin": "ast",
       "community": 9,
-      "community_name": "test_price_client.py",
+      "community_name": "test_actions.py",
       "file_type": "rationale",
-      "norm_label": "testet, ob historische kursdaten fur apple geladen werden konnen.",
-      "source_file": "tests/test_price_client.py",
-      "source_location": "L10"
+      "norm_label": "testet das verhalten bei einer aktie ohne historische splits (z.b. berkshire...",
+      "source_file": "tests/test_actions.py",
+      "source_location": "L26"
     },
     {
-      "id": "tests_test_price_client_rationale_23",
-      "label": "Testet das Verhalten bei einem ung\u00fcltigen Ticker.",
+      "id": "tests_test_actions_rationale_9",
+      "label": "Testet, ob die historischen Splits von Apple korrekt geladen und gecached\u2026",
       "_origin": "ast",
       "community": 9,
-      "community_name": "test_price_client.py",
+      "community_name": "test_actions.py",
       "file_type": "rationale",
-      "norm_label": "testet das verhalten bei einem ungultigen ticker.",
-      "source_file": "tests/test_price_client.py",
-      "source_location": "L23"
+      "norm_label": "testet, ob die historischen splits von apple korrekt geladen und gecached...",
+      "source_file": "tests/test_actions.py",
+      "source_location": "L9"
     },
     {
       "id": "openbb",
@@ -2168,6 +2179,18 @@
       "context": "call",
       "source_file": "src/pit_layer/providers/actions_provider.py",
       "source_location": "L51",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pit_layer_providers_actions_provider_actionsprovider_init",
+      "target": "src_pit_layer_clients_price_client_priceclient",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "src/pit_layer/providers/actions_provider.py",
+      "source_location": "L8",
       "weight": 1.0
     },
     {
@@ -3192,7 +3215,7 @@
     },
     {
       "source": "src_pit_layer_providers_actions_provider_actionsprovider_init",
-      "target": "src_pit_layer_clients_price_client_priceclient",
+      "target": "priceclient",
       "relation": "references",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -5203,17 +5226,6 @@
       "weight": 0.8
     },
     {
-      "source": "src_pit_layer_providers_actions_provider_actionsprovider",
-      "target": "src_pit_layer_clients_price_client_priceclient",
-      "relation": "uses",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.95,
-      "source_file": "src/pit_layer/providers/actions_provider.py",
-      "source_location": "L6",
-      "weight": 0.8
-    },
-    {
       "source": "src_pit_layer_providers_base_baseprovider",
       "target": "src_pit_layer_cache_sqlite_store_sqlitestore",
       "relation": "uses",
@@ -5369,5 +5381,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "502018209f6200c874024c94357a346a4f35404f"
+  "built_at_commit": "10137e261d57ab9c9c65bbd4ff6218bd881b1754"
 }
