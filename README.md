@@ -42,3 +42,16 @@ look-ahead and apply turnover costs.
   `SQLiteStore`.
 - Network-backed tests should be run explicitly; the default suite includes
   deterministic unit tests and the existing integration coverage.
+
+## Dashboard
+
+Start the local Bloomberg-inspired research terminal with:
+
+```text
+streamlit run app.py
+```
+
+The dashboard currently provides daily historical backtests, equity and risk
+metrics, current position state, and an explainable signal table. New strategies
+should be registered in `strategy_layer/ui/backtest_service.py`; this keeps the
+UI independent from strategy implementation details.

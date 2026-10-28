@@ -4,6 +4,7 @@ requests>=2.31
 python-dotenv>=1.0
 yfinance>=0.2
 openbb>=4.0
+streamlit>=1.35
 
 # Development and test dependencies
 pytest>=8.0
