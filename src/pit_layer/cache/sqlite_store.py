@@ -40,6 +40,17 @@ class SQLiteStore:
                     PRIMARY KEY (ticker, date)
                 )
             """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS market_observations (
+                    provider TEXT NOT NULL,
+                    series TEXT NOT NULL,
+                    observation_date TEXT NOT NULL,
+                    available_date TEXT NOT NULL,
+                    value REAL NOT NULL,
+                    metadata TEXT,
+                    PRIMARY KEY (provider, series, observation_date, available_date)
+                )
+            """)
             conn.commit()
 
     def save_mapping(self, ticker: str, cik: str, provider: str = "sec"):
@@ -105,3 +116,29 @@ class SQLiteStore:
             # Absteigend sortiert (neueste Splits zuerst)
             res = conn.execute("SELECT date, split_ratio FROM stock_splits WHERE ticker = ? ORDER BY date DESC", (ticker,)).fetchall()
             return [dict(row) for row in res]
+
+    def save_market_observations(self, records: list) -> None:
+        with sqlite3.connect(self.db_path) as conn:
+            conn.executemany("""
+                INSERT OR REPLACE INTO market_observations
+                (provider, series, observation_date, available_date, value, metadata)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, records)
+            conn.commit()
+
+    def get_market_observations(
+        self, provider: str, series: str, as_of_date: Optional[str] = None
+    ) -> list:
+        query = """
+            SELECT observation_date, available_date, value, metadata
+            FROM market_observations
+            WHERE provider = ? AND series = ?
+        """
+        params = [provider, series]
+        if as_of_date:
+            query += " AND available_date <= ?"
+            params.append(as_of_date)
+        query += " ORDER BY observation_date"
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            return [dict(row) for row in conn.execute(query, params).fetchall()]
