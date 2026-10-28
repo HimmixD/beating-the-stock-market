@@ -6,14 +6,20 @@ from pit_layer.utils import SEC_CONCEPT_MAP
 class SecProvider(BaseProvider):
     def __init__(self, cache, client: SecClient = None):
         super().__init__(cache)
-        self.client = client or SecClient()
+        self.client = client
+
+    def _client(self) -> SecClient:
+        if self.client is None:
+            self.client = SecClient()
+        return self.client
 
     def _ensure_cik(self, ticker: str) -> str:
         cik = self.cache.get_cik(ticker)
         if cik:
             return cik
             
-        tickers_data = self.client.fetch_tickers()
+        client = self._client()
+        tickers_data = client.fetch_tickers()
         for entry in tickers_data.values():
             t = entry["ticker"].upper()
             c = str(entry["cik_str"]).zfill(10)
@@ -28,7 +34,7 @@ class SecProvider(BaseProvider):
     def fetch_and_cache(self, ticker: str):
         ticker = ticker.upper()
         cik = self._ensure_cik(ticker)
-        facts_data = self.client.fetch_company_facts(cik)
+        facts_data = self._client().fetch_company_facts(cik)
         
         facts = facts_data.get("facts", {}).get("us-gaap", {})
         records = []
@@ -57,7 +63,10 @@ class SecProvider(BaseProvider):
                             elif form in ["10-Q", "10-Q/A"]:
                                 fp = "Q" # Grobschätzung, falls fp fehlt
 
-                        raw_accepted = item.get("accepted", item.get("filed") + "T23:59:59")
+                        filed = item.get("filed")
+                        if not filed:
+                            continue
+                        raw_accepted = item.get("accepted", filed + "T23:59:59")
                         accepted_ts = raw_accepted.replace("Z", "").split("+")[0]
                         
                         records.append((
@@ -66,7 +75,9 @@ class SecProvider(BaseProvider):
                             item.get("val"),
                             int(fy),
                             fp,
-                            item.get("filed"),
+                            item.get("start"),
+                            item.get("end"),
+                            filed,
                             accepted_ts,
                             form,
                             item.get("accn"),

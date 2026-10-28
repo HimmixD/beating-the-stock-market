@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Any, Optional
 from pit_layer.cache.sqlite_store import SQLiteStore
 
 class BaseProvider(ABC):
@@ -12,6 +12,7 @@ class BaseProvider(ABC):
         pass
 
     @abstractmethod
-    def get_value(self, ticker: str, concept: str, year: int, period: str, as_of_date: Optional[str]) -> Optional[float]:
+    def get_value(self, ticker: str, concept: str, year: int, period: str,
+                  as_of_date: Optional[str]) -> Optional[Any]:
         """Gibt den PIT-Wert zurück."""
         pass

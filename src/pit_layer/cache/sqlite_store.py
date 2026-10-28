@@ -16,21 +16,7 @@ class SQLiteStore:
                     provider TEXT
                 )
             """)
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS financial_facts (
-                    ticker TEXT,
-                    concept TEXT,
-                    val REAL,
-                    fy INTEGER,
-                    fp TEXT,
-                    filed TEXT,
-                    accepted TEXT,
-                    form TEXT,
-                    accession TEXT,
-                    provider TEXT,
-                    PRIMARY KEY (ticker, concept, fy, fp, accepted, provider)
-                )
-            """)
+            self._ensure_financial_facts_schema(cursor)
             # Tabelle für Aktiensplits
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS stock_splits (
@@ -53,6 +39,64 @@ class SQLiteStore:
             """)
             conn.commit()
 
+    @staticmethod
+    def _ensure_financial_facts_schema(cursor: sqlite3.Cursor) -> None:
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS financial_facts (
+                ticker TEXT NOT NULL,
+                concept TEXT NOT NULL,
+                val REAL,
+                fy INTEGER,
+                fp TEXT,
+                start_date TEXT,
+                end_date TEXT,
+                filed TEXT,
+                accepted TEXT,
+                form TEXT,
+                accession TEXT,
+                provider TEXT NOT NULL,
+                PRIMARY KEY (ticker, concept, fy, fp, start_date, end_date,
+                             accepted, provider)
+            )
+        """)
+        columns = {
+            row[1] for row in cursor.execute(
+                "PRAGMA table_info(financial_facts)"
+            ).fetchall()
+        }
+        required = {"start_date", "end_date"}
+        if required.issubset(columns):
+            return
+
+        cursor.execute("ALTER TABLE financial_facts RENAME TO financial_facts_legacy")
+        cursor.execute("""
+            CREATE TABLE financial_facts (
+                ticker TEXT NOT NULL,
+                concept TEXT NOT NULL,
+                val REAL,
+                fy INTEGER,
+                fp TEXT,
+                start_date TEXT,
+                end_date TEXT,
+                filed TEXT,
+                accepted TEXT,
+                form TEXT,
+                accession TEXT,
+                provider TEXT NOT NULL,
+                PRIMARY KEY (ticker, concept, fy, fp, start_date, end_date,
+                             accepted, provider)
+            )
+        """)
+        cursor.execute("""
+            INSERT OR IGNORE INTO financial_facts
+            (ticker, concept, val, fy, fp, start_date, end_date, filed,
+             accepted, form, accession, provider)
+            SELECT ticker, concept, val, fy, fp, NULL, NULL, filed, accepted,
+                   form, accession, provider
+            FROM financial_facts_legacy
+        """)
+        cursor.execute("DROP TABLE financial_facts_legacy")
+
     def save_mapping(self, ticker: str, cik: str, provider: str = "sec"):
         with sqlite3.connect(self.db_path) as conn:
             conn.execute(
@@ -69,20 +113,24 @@ class SQLiteStore:
         with sqlite3.connect(self.db_path) as conn:
             conn.executemany("""
                 INSERT OR REPLACE INTO financial_facts 
-                (ticker, concept, val, fy, fp, filed, accepted, form, accession, provider)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (ticker, concept, val, fy, fp, start_date, end_date, filed,
+                 accepted, form, accession, provider)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, records)
             conn.commit()
 
     def get_pit_value(self, ticker: str, concept: str, year: int, period: str, as_of_date: Optional[str]) -> Optional[dict]:
         # Wir filtern nun primär nach dem exakten accepted-Timestamp für micro-precision PIT
         query = """
-            SELECT val, filed, accepted, form, accession FROM financial_facts 
+            SELECT val, filed, accepted, form, accession, start_date, end_date
+            FROM financial_facts
             WHERE ticker = ? AND concept = ? AND fy = ? AND fp = ?
         """
         params = [ticker, concept, year, period]
 
         if as_of_date:
+            if len(as_of_date) == 10:
+                as_of_date = f"{as_of_date}T23:59:59"
             query += " AND accepted <= ?"
             params.append(as_of_date)
 
@@ -96,7 +144,9 @@ class SQLiteStore:
                     "filed": res[1],
                     "accepted": res[2],
                     "form": res[3],
-                    "accession": res[4]
+                    "accession": res[4],
+                    "start": res[5],
+                    "end": res[6],
                 }
             return None
 
@@ -109,12 +159,18 @@ class SQLiteStore:
             """, records)
             conn.commit()
 
-    def get_splits(self, ticker: str) -> list:
+    def get_splits(self, ticker: str, as_of_date: Optional[str] = None) -> list:
         """Gibt eine Liste von Dicts mit allen Splits eines Tickers zurück."""
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             # Absteigend sortiert (neueste Splits zuerst)
-            res = conn.execute("SELECT date, split_ratio FROM stock_splits WHERE ticker = ? ORDER BY date DESC", (ticker,)).fetchall()
+            query = "SELECT date, split_ratio FROM stock_splits WHERE ticker = ?"
+            params = [ticker]
+            if as_of_date:
+                query += " AND date <= ?"
+                params.append(as_of_date[:10])
+            query += " ORDER BY date DESC"
+            res = conn.execute(query, params).fetchall()
             return [dict(row) for row in res]
 
     def save_market_observations(self, records: list) -> None:

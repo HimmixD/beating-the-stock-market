@@ -24,7 +24,21 @@ tests/
 
 `MacroProvider` stores `available_date` separately from the observation date.
 With a `FRED_API_KEY`, FRED realtime vintages are used. Without a key, the
-public CSV endpoint is supported and its observation date is used as the
-availability lower bound; production PIT studies should therefore configure the
-API key. Backtests shift generated signals by one daily bar to prevent
-same-bar look-ahead and apply turnover costs.
+public CSV endpoint is supported for exploration only; it does not provide
+historical release vintages and must not be used for a strict PIT study.
+Backtests shift generated signals by one daily bar to prevent same-bar
+look-ahead and apply turnover costs.
+
+## PIT guarantees and limitations
+
+- SEC facts use the filing availability timestamp and preserve reporting
+  `start_date`/`end_date`.
+- Global fundamentals are accepted only when the upstream record includes a
+  publication or filing date. A reporting-period end date is never treated as
+  a release date.
+- A request with `as_of_date` is PIT-filtered; a request without it is an
+  explicitly flagged latest snapshot.
+- `database.db` is a local cache and is ignored by Git. It is recreated by
+  `SQLiteStore`.
+- Network-backed tests should be run explicitly; the default suite includes
+  deterministic unit tests and the existing integration coverage.

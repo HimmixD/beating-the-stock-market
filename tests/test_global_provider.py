@@ -1,4 +1,3 @@
-import pytest
 from pit_layer.cache.sqlite_store import SQLiteStore
 from pit_layer.providers.global_provider import GlobalProvider
 
@@ -9,6 +8,7 @@ class MockOpenBBClient:
             return [
                 {
                     "date": "2023-12-31",
+                    "filing_date": "2024-02-15",
                     "NetIncome": 150000000.0,
                     "TotalRevenue": 500000000.0
                 }

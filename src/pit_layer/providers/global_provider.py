@@ -24,9 +24,13 @@ class GlobalProvider(BaseProvider):
                 
             records = []
             for row in records_raw:
-                filed_date = str(row.get("date", row.get("period_ending", "2023-12-31")))[:10]
+                filed_date = self._publication_date(row)
+                if filed_date is None:
+                    continue
+                period_end = self._date_value(row.get("period_ending", row.get("date")))
+                period_start = self._date_value(row.get("period_start", row.get("start")))
                 try:
-                    fy = int(filed_date[:4])
+                    fy = int((period_end or filed_date)[:4])
                 except (ValueError, TypeError):
                     fy = 2023 # Fallback
                 
@@ -34,19 +38,20 @@ class GlobalProvider(BaseProvider):
                     if col in ["date", "period_ending", "fiscal_year", "period"]:
                         continue
                     if isinstance(val, (int, float)) and pd.notna(val):
-                        # EXAKT 10 Elemente passend zum neuen SQLite Schema:
-                        # (ticker, concept, val, fy, fp, filed, accepted, form, accession, provider)
+                        # The publication date is the PIT availability boundary.
                         records.append((
                             ticker,
                             col,
                             float(val),
                             fy,
                             "FY",
+                            period_start,
+                            period_end,
                             filed_date,
-                            filed_date,         # accepted fallback für Global
-                            "ANNUAL",           # form
-                            None,               # accession (gibt es bei OpenBB/yfinance nicht)
-                            "global_openbb"     # provider
+                            filed_date,
+                            "ANNUAL",
+                            None,
+                            "global_openbb",
                         ))
                         
             if records:
@@ -62,9 +67,10 @@ class GlobalProvider(BaseProvider):
         print(f"Lade initial Global/OpenBB Daten für {ticker}...")
         try:
             self.fetch_and_cache(ticker)
-        except Exception as e:
-            print(f"Konnte Daten für {ticker} nicht laden: {e}")
-            return None
+        except Exception as exc:
+            raise RuntimeError(
+                f"Global-Daten für {ticker} konnten nicht geladen werden."
+            ) from exc
             
         result = self.cache.get_pit_value(ticker, concept, year, period, as_of_date)
         if result is not None:
@@ -75,3 +81,18 @@ class GlobalProvider(BaseProvider):
     def _enrich_result(self, result: dict, as_of_date: Optional[str]) -> dict:
         result["pit_status"] = "safe_pit" if as_of_date else "latest_snapshot_warning_lookahead"
         return result
+
+    @staticmethod
+    def _date_value(value) -> Optional[str]:
+        if value is None or pd.isna(value):
+            return None
+        parsed = pd.to_datetime(value, errors="coerce")
+        return None if pd.isna(parsed) else parsed.strftime("%Y-%m-%d")
+
+    def _publication_date(self, row: dict) -> Optional[str]:
+        for key in ("filing_date", "filingDate", "published", "publication_date",
+                    "report_date"):
+            parsed = self._date_value(row.get(key))
+            if parsed:
+                return parsed
+        return None
